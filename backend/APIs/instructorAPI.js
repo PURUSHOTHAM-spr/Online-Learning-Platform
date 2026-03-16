@@ -196,10 +196,49 @@ instructorRouter.post("/add-section/:courseId", async (req, res) => {
 });
 
 
+// UPDATE SECTION
 
-// =============================
-// 7️⃣ ADD LECTURE
-// =============================
+instructorRouter.put("/update-section/:courseId/:sectionId", async (req, res) => {
+  try {
+    const { courseId, sectionId } = req.params;
+    const { sectionTitle } = req.body;
+    const instructorId = req.user._id;
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    if (course.instructor.toString() !== instructorId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const section = course.sections.id(sectionId);
+
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    if (sectionTitle) {
+      section.sectionTitle = sectionTitle;
+    }
+
+    await course.save();
+
+    res.json({
+      message: "Section updated successfully",
+      payload: course
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error updating section", error });
+  }
+});
+
+
+// ADD LECTURE
+
 instructorRouter.post("/add-lecture/:courseId/:sectionId", upload.single("video"), async (req, res) => {
   try {
 
@@ -254,5 +293,43 @@ instructorRouter.post("/add-lecture/:courseId/:sectionId", upload.single("video"
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error adding lecture", error });
+  }
+});
+
+
+// Delete section
+
+instructorRouter.delete('/delete-section/:courseId/:sectionId', async (req, res) => {
+  try {
+    const { courseId, sectionId } = req.params;
+    const instructorId = req.user._id;
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    if (course.instructor.toString() !== instructorId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const section = course.sections.id(sectionId);
+
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    section.remove();
+
+    await course.save();
+
+    res.json({
+      message: "Section deleted successfully",
+      payload: course
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting section", error });
   }
 });
