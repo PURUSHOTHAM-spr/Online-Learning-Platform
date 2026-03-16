@@ -320,7 +320,7 @@ instructorRouter.delete('/delete-section/:courseId/:sectionId', async (req, res)
       return res.status(404).json({ message: "Section not found" });
     }
 
-    section.remove();
+    course.sections.pull(sectionId);
 
     await course.save();
 
@@ -330,6 +330,50 @@ instructorRouter.delete('/delete-section/:courseId/:sectionId', async (req, res)
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Error deleting section", error });
+    res.status(500).json({ message: "Error deleting section", error: error.message });
+  }
+});
+
+
+// Delete Lecture
+
+instructorRouter.delete('/delete-lecture/:courseId/:sectionId/:lectureId', async (req, res) => {
+  try {
+    const { courseId, sectionId, lectureId } = req.params;
+    const instructorId = req.user._id;
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    if (course.instructor.toString() !== instructorId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const section = course.sections.id(sectionId);
+
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    const lecture = section.lectures.id(lectureId);
+
+    if (!lecture) {
+      return res.status(404).json({ message: "Lecture not found" });
+    }
+
+    section.lectures.pull(lectureId);
+
+    await course.save();
+
+    res.json({
+      message: "Lecture deleted successfully",
+      payload: course
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting lecture", error: error.message });
   }
 });

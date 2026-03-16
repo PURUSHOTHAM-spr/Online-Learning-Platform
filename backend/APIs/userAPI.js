@@ -95,3 +95,23 @@ userRouter.get('/courses', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+
+// Get the single course details
+
+userRouter.get('/course/:id', async(req, res)=>{
+    try {
+        const courseId = req.params.id;
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: "course not found" });
+        }
+        res.status(200).json({
+            message: "course details",
+            payload: course
+        });
+    } catch(error) {
+        res.status(500).json({message: error.message});
+    }
+})
+
