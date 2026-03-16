@@ -50,6 +50,10 @@ const courseSchema = new mongoose.Schema({
         type: [contentSchema],
         default: []
     },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     studentsEnrolled: {
         type: Number,
         default: 0

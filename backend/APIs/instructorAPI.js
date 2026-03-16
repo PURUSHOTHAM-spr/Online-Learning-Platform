@@ -58,15 +58,24 @@ instructorRouter.get("/courses/:id", async (req, res) => {
 
 // GET SINGLE COURSE
 
-instructorRouter.get("/course/:courseId", async (req, res) => {
+instructorRouter.get("/course/:instructorId/:courseId", async (req, res) => {
   try {
 
-    const { courseId } = req.params;
+    const { instructorId, courseId } = req.params;
 
     const course = await Course.findById(courseId);
+    const instructor = await User.findById(instructorId);
+
+    if(!instructor){
+      return res.status(404).json({ message: "Instructor not found" });
+    }
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
+    }
+
+    if(course.instructor.toString() !== instructorId){
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     res.json({

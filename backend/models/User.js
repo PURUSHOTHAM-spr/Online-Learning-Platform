@@ -24,6 +24,10 @@ const userSchema = mongoose.Schema({
         enum: ["STUDENT", "INSTRUCTOR", "ADMIN"],
         required: [true, "role is required"]
     },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     profilePic: {
         type: String
     },
