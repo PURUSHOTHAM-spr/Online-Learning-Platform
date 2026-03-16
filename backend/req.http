@@ -1,0 +1,35 @@
+//User api routes
+
+
+### Register a new user
+
+POST http://localhost:3000/user-api/register
+Content-Type: application/json
+
+{
+    "firstName": "Abhinav",
+    "lastName": "Chowdary",
+    "email": "11@gmail.com",
+    "password": "password123",
+    "role": "INSTRUCTOR"
+}
+
+### Enroll course
+POST http://localhost:3000/user-api/enroll-course/69b7b92a3b21e6bc9953e040
+Content-Type: application/json
+
+{
+    "courseId": "69b7beda67d24e6ad410cf77"
+}
+
+
+### Get user enrolled courses
+GET http://localhost:3000/user-api/my-courses/69b7b92a3b21e6bc9953e040
+
+
+### Get all courses
+GET http://localhost:3000/user-api/courses
+
+
+
+// Instructure api routes

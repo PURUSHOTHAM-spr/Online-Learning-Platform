@@ -6,19 +6,11 @@ export const userRouter = express.Router();
 
 
 //registration route will be removes easily
-userRouter.post('/register', async (req, res) => {
-    try {
-        const user = req.body;
-        const userDoc = await User.create(user);
-
-        res.status(201).json({
-            message: "user registered successfully",
-            payload: userDoc
-        });
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+userRouter.post('/register', async(req, res)=>{ 
+    let user = req.body; 
+    const userDoc = await User.create(user); 
+    userDoc.save(); 
+    res.status(200).json({ message: "user regiestered sucessfully", payload: userDoc }); 
 });
 
 //Enroll courses
