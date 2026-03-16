@@ -1,0 +1,89 @@
+// Auth api routes
+
+### Register a new user
+POST http://localhost:3000/common-api/register
+Content-Type: application/json
+
+{
+    "firstName": "Abhinav",
+    "lastName": "Chowdary",
+    "email": "11@gmail.com",
+    "password": "password123",
+    "role": "INSTRUCTOR"
+}
+
+### Login user
+POST http://localhost:3000/common-api/login
+Content-Type: application/json
+
+{
+    "email": "11@gmail.com",
+    "password": "password123"
+}
+
+### Logout user
+POST http://localhost:3000/common-api/logout
+
+
+
+// User api routes
+
+### Enroll course
+POST http://localhost:3000/user-api/enroll-course
+Content-Type: application/json
+
+{
+    "courseId": "69b7beda67d24e6ad410cf77"
+}
+
+### Get user enrolled courses
+GET http://localhost:3000/user-api/my-courses
+
+### Get user profile
+GET http://localhost:3000/user-api/profile
+
+### Get all courses
+GET http://localhost:3000/user-api/courses
+
+
+
+// Instructure api routes
+
+### Create course
+POST http://localhost:3000/instructor-api/create-course
+Content-Type: application/json
+
+{
+    "title": "Node.js and Express Masterclass",
+    "description": "Build scalable backend applications using Node.js and Express.",
+    "courseOutcomes": [
+      "Create REST APIs",
+      "Authentication with JWT",
+      "Connect MongoDB",
+      "Error handling"
+    ],
+    "category": "Backend Development",
+    "courseLevel": "Intermediate",
+    "content": [
+      {
+        "video": {
+          "title": "Node.js Fundamentals",
+          "description": "Understanding Node.js architecture.",
+          "url": "https://example.com/node-intro.mp4"
+        }
+      },
+      {
+        "video": {
+          "title": "Building REST APIs",
+          "description": "Creating RESTful APIs with Express.",
+          "url": "https://example.com/express-api.mp4"
+        }
+      }
+    ]
+}
+
+### Get instructor courses
+GET http://localhost:3000/instructor-api/my-courses
+
+### Get single course
+GET http://localhost:3000/instructor-api/course/69b7beda67d24e6ad410cf77
