@@ -33,3 +33,49 @@ GET http://localhost:3000/user-api/courses
 
 
 // Instructure api routes
+
+### Create course
+POST http://localhost:3000/instructor-api/create-course/69b7c191f7ea2c8bfce51d0b
+Content-Type: application/json
+
+{
+    "title": "Node.js and Express Masterclass",
+    "description": "Build scalable backend applications using Node.js and Express.",
+    "courseOutcomes": [
+      "Create REST APIs",
+      "Authentication with JWT",
+      "Connect MongoDB",
+      "Error handling"
+    ],
+    "category": "Backend Development",
+    "courseLevel": "Intermediate",
+    "instructor": "69b7c191f7ea2c8bfce51d0b",
+    "content": [
+      {
+        "video": {
+          "title": "Node.js Fundamentals",
+          "description": "Understanding Node.js architecture.",
+          "url": "https://example.com/node-intro.mp4"
+        }
+      },
+      {
+        "video": {
+          "title": "Building REST APIs",
+          "description": "Creating RESTful APIs with Express.",
+          "url": "https://example.com/express-api.mp4"
+        }
+      }
+    ],
+    "comments": [
+      {
+        "user": "65f1a2c3b9d1e23456789013",
+        "comment": "API explanation was really good."
+      }
+    ]
+  }
+
+
+### Get all courses
+GET http://localhost:3000/instructor-api/courses/69b7c191f7ea2c8bfce51d0b
+
+

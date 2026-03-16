@@ -45,6 +45,10 @@ instructorRouter.get("/courses/:id", async (req, res) => {
 
     const courses = await Course.find({ instructor: instructorId });
 
+    if(!courses){
+      return res.status(404).json({ message: "Courses not found" });
+    }
+
     res.json({
       message: "Courses fetched successfully",
       payload: courses
