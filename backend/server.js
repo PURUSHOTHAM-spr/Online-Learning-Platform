@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { connect } from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { userRouter } from './APIs/userAPI.js';
+import { instructorRouter } from './APIs/instructorAPI.js';
 
 config();
 const app = express();
@@ -11,7 +12,8 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
 
-app.use('/user-api', userRouter)
+app.use('/user-api', userRouter);
+app.use('/instructor-api', instructorRouter);
 
 const connectDB = async()=>{
     try {

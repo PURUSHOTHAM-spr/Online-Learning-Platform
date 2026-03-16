@@ -17,9 +17,9 @@ const contentSchema = mongoose.Schema({
     }
 })
 
-const userCommentSchema = new Schema({
+const userCommentSchema = new mongoose.Schema({
     user: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
     comment: {
@@ -29,7 +29,7 @@ const userCommentSchema = new Schema({
     versionKey: false
 })
 
-const courseSchema = mongoose.Schema({
+const courseSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, "title is required"]
