@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { version } from "mongoose";
 
 const userSchema = mongoose.Schema({
     firstName: {
@@ -28,7 +28,14 @@ const userSchema = mongoose.Schema({
         type: String
     },
     coursesEnrolled: {
-        
-    }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+        default: []
+    },
+}, {
+    strict: true,
+    versionKey: false,
+    timestamps: true
+});
 
-})
+export const User = mongoose.model('User', userSchema);
