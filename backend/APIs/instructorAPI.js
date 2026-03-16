@@ -2,6 +2,8 @@ import express from "express";
 import { User } from "../models/User.js";
 import { Course } from "../models/Course.js";
 import { verifyToken, authorizeRole } from "../middlewares/verifyToken.js";
+import { upload } from "../middlewares/multer.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 export const instructorRouter = express.Router();
 
@@ -198,11 +200,11 @@ instructorRouter.post("/add-section/:courseId", async (req, res) => {
 // =============================
 // 7️⃣ ADD LECTURE
 // =============================
-instructorRouter.post("/add-lecture/:courseId/:sectionId", async (req, res) => {
+instructorRouter.post("/add-lecture/:courseId/:sectionId", upload.single("video"), async (req, res) => {
   try {
 
     const { courseId, sectionId } = req.params;
-    const lectureData = req.body;
+    const { title, description, isPreview } = req.body;
 
     const course = await Course.findById(courseId);
 
@@ -216,6 +218,30 @@ instructorRouter.post("/add-lecture/:courseId/:sectionId", async (req, res) => {
       return res.status(404).json({ message: "Section not found" });
     }
 
+    // Handle Cloudinary upload if a video file was included
+    let videoUrl = "";
+    let duration = "0";
+
+    if (req.file) {
+      const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+      if (cloudinaryResponse) {
+        videoUrl = cloudinaryResponse.secure_url;
+        duration = cloudinaryResponse.duration ? cloudinaryResponse.duration.toString() : "0";
+      }
+    }
+
+    if (!videoUrl) {
+      return res.status(400).json({ message: "Video file is required and upload must succeed" });
+    }
+
+    const lectureData = {
+      title,
+      description,
+      videoUrl,
+      duration,
+      isPreview: isPreview === 'true' || isPreview === true
+    };
+
     section.lectures.push(lectureData);
 
     await course.save();
@@ -226,6 +252,7 @@ instructorRouter.post("/add-lecture/:courseId/:sectionId", async (req, res) => {
     });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Error adding lecture", error });
   }
 });
