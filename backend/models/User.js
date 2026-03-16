@@ -27,11 +27,10 @@ const userSchema = mongoose.Schema({
     profilePic: {
         type: String
     },
-    coursesEnrolled: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Course",
-        default: []
-    },
+    coursesEnrolled: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Course"
+}]
 }, {
     strict: true,
     versionKey: false,

@@ -9,5 +9,7 @@ userRouter.get('/hello', (req, res)=>{
 
 userRouter.post('/register', async(req, res)=>{
     let user = req.body;
-    res.send(user);
+    const userDoc = await User.create(user);
+    userDoc.save();
+    res.json({ message: "user regiestered sucessfully", payload: userDoc });
 });

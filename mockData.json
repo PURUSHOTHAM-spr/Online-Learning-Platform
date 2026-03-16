@@ -1,0 +1,56 @@
+[
+  {
+    "firstName": "Abhinav",
+    "lastName": "Chowdary",
+    "email": "abhinav.dev@example.com",
+    "password": "password123",
+    "role": "STUDENT",
+    "profilePic": "https://randomuser.me/api/portraits/men/11.jpg",
+    "coursesEnrolled": []
+  },
+  {
+    "firstName": "Rahul",
+    "lastName": "Sharma",
+    "email": "rahul.sharma@example.com",
+    "password": "password123",
+    "role": "STUDENT",
+    "profilePic": "https://randomuser.me/api/portraits/men/12.jpg",
+    "coursesEnrolled": []
+  },
+  {
+    "firstName": "Priya",
+    "lastName": "Reddy",
+    "email": "priya.reddy@example.com",
+    "password": "password123",
+    "role": "STUDENT",
+    "profilePic": "https://randomuser.me/api/portraits/women/15.jpg",
+    "coursesEnrolled": []
+  },
+  {
+    "firstName": "Vikram",
+    "lastName": "Naidu",
+    "email": "vikram.naidu@example.com",
+    "password": "password123",
+    "role": "INSTRUCTURE",
+    "profilePic": "https://randomuser.me/api/portraits/men/21.jpg",
+    "coursesEnrolled": []
+  },
+  {
+    "firstName": "Ananya",
+    "lastName": "Iyer",
+    "email": "ananya.iyer@example.com",
+    "password": "password123",
+    "role": "INSTRUCTURE",
+    "profilePic": "https://randomuser.me/api/portraits/women/22.jpg",
+    "coursesEnrolled": []
+  },
+  {
+    "firstName": "System",
+    "lastName": "Admin",
+    "email": "admin@example.com",
+    "password": "admin123",
+    "role": "ADMIN",
+    "profilePic": "https://randomuser.me/api/portraits/men/30.jpg",
+    "coursesEnrolled": []
+  }
+]
