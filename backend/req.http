@@ -79,3 +79,5 @@ Content-Type: application/json
 GET http://localhost:3000/instructor-api/courses/69b7c191f7ea2c8bfce51d0b
 
 
+### Get single course
+GET http://localhost:3000/instructor-api/course/69b7c191f7ea2c8bfce51d0b/69b7beda67d24e6ad410cf77
