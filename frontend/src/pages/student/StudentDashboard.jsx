@@ -1,12 +1,12 @@
 import {
   pageBackground,
   pageContainer
-} from "../styles/common";
+} from "../../styles/common";
 
 function StudentDashboard() {
   return (
     <div className={pageBackground}>
-      
+
       {/* Welcome Section */}
       <div className="bg-white border-b">
         <div className={pageContainer}>
@@ -19,7 +19,6 @@ function StudentDashboard() {
           </p>
         </div>
       </div>
-
 
       {/* Hero Banner */}
       <div className="bg-[#93c5bd] py-14">
@@ -41,13 +40,13 @@ function StudentDashboard() {
           <div className="flex justify-center">
             <img
               src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+              alt="learning illustration"
               className="w-[200px]"
             />
           </div>
 
         </div>
       </div>
-
 
       {/* Continue Learning */}
       <div className="max-w-6xl mx-auto px-6 py-12">
@@ -58,13 +57,17 @@ function StudentDashboard() {
 
         <div className="grid md:grid-cols-3 gap-6">
 
+          {/* Course Card */}
           <div className="border rounded overflow-hidden hover:shadow transition">
+
             <img
               src="https://img-c.udemycdn.com/course/480x270/1565838_e54e_18.jpg"
+              alt="React Course"
               className="h-[150px] w-full object-cover"
             />
 
             <div className="p-4">
+
               <h3 className="font-semibold text-sm">
                 React JS Complete Guide
               </h3>
@@ -73,6 +76,7 @@ function StudentDashboard() {
                 Maximilian Schwarzmüller
               </p>
 
+              {/* Progress Bar */}
               <div className="mt-3 bg-gray-200 h-2 rounded">
                 <div className="bg-purple-600 h-2 w-[60%] rounded"></div>
               </div>
@@ -80,8 +84,8 @@ function StudentDashboard() {
               <p className="text-xs mt-1 text-gray-500">
                 60% complete
               </p>
-            </div>
 
+            </div>
           </div>
 
         </div>
