@@ -5,13 +5,12 @@ POST http://localhost:3000/common-api/register
 Content-Type: application/json
 
 {
-    "firstName": "Abhinav",
-    "lastName": "Chowdary",
-    "email": "11@gmail.com",
+    "firstName": "Priya",
+    "lastName": "Reddy",
+    "email": "123@gmail.com",
     "password": "password123",
-    "role": "INSTRUCTOR"
-}
-
+    "role": "STUDENT"
+  }
 ### Login user
 POST http://localhost:3000/common-api/login
 Content-Type: application/json
@@ -33,7 +32,7 @@ POST http://localhost:3000/user-api/enroll-course
 Content-Type: application/json
 
 {
-    "courseId": "69b7beda67d24e6ad410cf77"
+    "courseId": "69b7cd4671b24b7980911200"
 }
 
 ### Get user enrolled courses
