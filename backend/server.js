@@ -4,6 +4,7 @@ import { connect } from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { userRouter } from './APIs/userAPI.js';
 import { instructorRouter } from './APIs/instructorAPI.js';
+import { authRouter } from './APIs/commonAPI.js';
 
 config();
 const app = express();
@@ -14,6 +15,7 @@ app.use(cookieParser());
 
 app.use('/user-api', userRouter);
 app.use('/instructor-api', instructorRouter);
+app.use('/common-api', authRouter);
 
 const connectDB = async()=>{
     try {

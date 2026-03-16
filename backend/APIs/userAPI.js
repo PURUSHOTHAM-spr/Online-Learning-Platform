@@ -1,22 +1,34 @@
 import express from "express";
 import { User } from "../models/User.js";
 import { Course } from "../models/Course.js";
+import { verifyToken } from "../middlewares/verifyToken.js";
 
 export const userRouter = express.Router();
 
+// Apply verifyToken middleware to all user routes
+userRouter.use(verifyToken);
 
-//registration route will be removes easily
-userRouter.post('/register', async(req, res)=>{ 
-    let user = req.body; 
-    const userDoc = await User.create(user); 
-    userDoc.save(); 
-    res.status(200).json({ message: "user regiestered sucessfully", payload: userDoc }); 
+
+// Get User Profile
+userRouter.get('/profile', async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId).select('-password');
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.status(200).json({ message: "User profile fetched successfully", payload: user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
-//Enroll courses
-userRouter.post('/enroll-course/:id', async (req, res) => {
+// Enroll courses
+userRouter.post('/enroll-course', async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.user._id;
         const courseId = req.body.courseId;
 
         const user = await User.findById(userId);
@@ -29,7 +41,7 @@ userRouter.post('/enroll-course/:id', async (req, res) => {
             return res.status(404).json({ message: "course not found" });
         }
 
-        if (user.coursesEnrolled.includes(courseId)) {
+        if (user.coursesEnrolled.some(c => c.toString() === courseId)) {
             return res.status(400).json({ message: "already enrolled in this course" });
         }
 
@@ -50,9 +62,9 @@ userRouter.post('/enroll-course/:id', async (req, res) => {
 });
 
 
-userRouter.get('/my-courses/:id', async (req, res) => {
+userRouter.get('/my-courses', async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.user._id;
 
         const user = await User.findById(userId)
             .populate("coursesEnrolled");

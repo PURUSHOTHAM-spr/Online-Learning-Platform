@@ -1,16 +1,19 @@
 import express from "express";
 import { User } from "../models/User.js";
 import { Course } from "../models/Course.js";
+import { verifyToken, authorizeRole } from "../middlewares/verifyToken.js";
 
 export const instructorRouter = express.Router();
 
+// Apply authentication and check if user is an instructor
+instructorRouter.use(verifyToken, authorizeRole("INSTRUCTOR", "ADMIN"));
+
 // CREATE COURSE
 
-instructorRouter.post("/create-course/:id", async (req, res) => {
+instructorRouter.post("/create-course", async (req, res) => {
   try {
-
     const courseData = req.body;
-    const instructorId = req.params.id;
+    const instructorId = req.user._id;
 
     const instructor = await User.findById(instructorId);
 
@@ -38,10 +41,9 @@ instructorRouter.post("/create-course/:id", async (req, res) => {
 
 //   GET ALL COURSES OF INSTRUCTOR
 
-instructorRouter.get("/courses/:id", async (req, res) => {
+instructorRouter.get("/my-courses", async (req, res) => {
   try {
-
-    const instructorId = req.params.id;
+    const instructorId = req.user._id;
 
     const courses = await Course.find({ instructor: instructorId });
 
@@ -62,10 +64,11 @@ instructorRouter.get("/courses/:id", async (req, res) => {
 
 // GET SINGLE COURSE
 
-instructorRouter.get("/course/:instructorId/:courseId", async (req, res) => {
+instructorRouter.get("/course/:courseId", async (req, res) => {
   try {
 
-    const { instructorId, courseId } = req.params;
+    const { courseId } = req.params;
+    const instructorId = req.user._id;
 
     const course = await Course.findById(courseId);
     const instructor = await User.findById(instructorId);
@@ -95,10 +98,11 @@ instructorRouter.get("/course/:instructorId/:courseId", async (req, res) => {
 
 // UPDATE COURSE
 
-instructorRouter.put("/update-course/:courseId/:instructorId", async (req, res) => {
+instructorRouter.put("/update-course/:courseId", async (req, res) => {
   try {
 
-    const { courseId, instructorId } = req.params;
+    const { courseId } = req.params;
+    const instructorId = req.user._id;
     const updates = req.body;
 
     const course = await Course.findById(courseId);
@@ -130,10 +134,11 @@ instructorRouter.put("/update-course/:courseId/:instructorId", async (req, res) 
 
 //  DELETE COURSE
 
-instructorRouter.delete("/delete-course/:courseId/:instructorId", async (req, res) => {
+instructorRouter.delete("/delete-course/:courseId", async (req, res) => {
   try {
 
-    const { courseId, instructorId } = req.params;
+    const { courseId } = req.params;
+    const instructorId = req.user._id;
 
     const course = await Course.findById(courseId);
 
@@ -193,34 +198,34 @@ instructorRouter.post("/add-section/:courseId", async (req, res) => {
 // =============================
 // 7️⃣ ADD LECTURE
 // =============================
-// instructorRouter.post("/add-lecture/:courseId/:sectionId", async (req, res) => {
-//   try {
+instructorRouter.post("/add-lecture/:courseId/:sectionId", async (req, res) => {
+  try {
 
-//     const { courseId, sectionId } = req.params;
-//     const lectureData = req.body;
+    const { courseId, sectionId } = req.params;
+    const lectureData = req.body;
 
-//     const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId);
 
-//     if (!course) {
-//       return res.status(404).json({ message: "Course not found" });
-//     }
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
 
-//     const section = course.sections.id(sectionId);
+    const section = course.sections.id(sectionId);
 
-//     if (!section) {
-//       return res.status(404).json({ message: "Section not found" });
-//     }
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
 
-//     section.lectures.push(lectureData);
+    section.lectures.push(lectureData);
 
-//     await course.save();
+    await course.save();
 
-//     res.json({
-//       message: "Lecture added successfully",
-//       payload: course
-//     });
+    res.json({
+      message: "Lecture added successfully",
+      payload: course
+    });
 
-//   } catch (error) {
-//     res.status(500).json({ message: "Error adding lecture", error });
-//   }
-// });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding lecture", error });
+  }
+});
