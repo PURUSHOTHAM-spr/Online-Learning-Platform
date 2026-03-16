@@ -62,10 +62,7 @@ const courseData = [
     ],
     "category": "Web Development",
     "courseLevel": "Beginner",
-    "studentsEnrolled": 120,
-    "instructor": "65f1a2c3b9d1e23456789001",
-    "rating": 4.6,
-    "ratingCount": 89,
+    "instructor": "69b7b94e34f5d86d5ebd7f85",
     "content": [
       {
         "video": {
