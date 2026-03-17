@@ -8,8 +8,8 @@ import MyCourses from "./student/MyCourses"
 import InstructorDashboard from "./instructor/InstructorDashboard"
 import CreateCourse from "./instructor/CreateCourse"
 import AdminDashboard from "./admin/AdminDashboard"
-import ProtectedRoute from "./components/ProtectedRoute"
-import PublicRoute from "./components/PublicRoute"
+import ProtectedRoute from "./routes/ProtectedRoute"
+import PublicRoute from "./routes/PublicRoute"
 
 function App() {
   return (
