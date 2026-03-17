@@ -9,6 +9,7 @@ export const authRouter = express.Router();
 authRouter.post('/register', async (req, res) => {
     try {
         let user = req.body;
+        user.email = user.email?.trim().toLowerCase();
         
         // Check if user already exists
         const existingUser = await User.findOne({ email: user.email });
@@ -33,7 +34,8 @@ authRouter.post('/register', async (req, res) => {
 // User Login
 authRouter.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const email = req.body.email?.trim().toLowerCase();
+        const password = req.body.password;
 
         // 1. Check if user exists
         const user = await User.findOne({ email });

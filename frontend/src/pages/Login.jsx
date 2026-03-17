@@ -20,7 +20,12 @@ function Login() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const res = await axiosInstance.post("/common-api/login", data);
+      const payload = {
+        ...data,
+        email: data.email?.trim().toLowerCase(),
+      };
+
+      const res = await axiosInstance.post("/common-api/login", payload);
       
       toast.success(res.data.message || "Login successful!");
       const user = res.data.payload;
@@ -194,4 +199,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Login;
