@@ -85,18 +85,44 @@ function Navbar() {
           )}
 
           {user && user.role === "INSTRUCTOR" && (
-            <NavLink
-              to="/instructor-dashboard"
-              className={({ isActive }) =>
-                `text-sm font-medium transition ${
-                  isActive
-                    ? "text-violet-600"
-                    : "text-gray-700 hover:text-violet-600"
-                }`
-              }
-            >
-              Instructor Panel
-            </NavLink>
+            <>
+              <NavLink
+                to="/instructor-dashboard"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition ${
+                    isActive
+                      ? "text-violet-600"
+                      : "text-gray-700 hover:text-violet-600"
+                  }`
+                }
+              >
+                Instructor Panel
+              </NavLink>
+              <NavLink
+                to="/instructor-my-courses"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition ${
+                    isActive
+                      ? "text-violet-600"
+                      : "text-gray-700 hover:text-violet-600"
+                  }`
+                }
+              >
+                My Courses
+              </NavLink>
+              <NavLink
+                to="/instructor-reviews"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition ${
+                    isActive
+                      ? "text-violet-600"
+                      : "text-gray-700 hover:text-violet-600"
+                  }`
+                }
+              >
+                Reviews
+              </NavLink>
+            </>
           )}
 
           {user && user.role === "ADMIN" && (

@@ -7,12 +7,15 @@ import StudentDashboard from "./student/StudentDashboard"
 import MyCourses from "./student/MyCourses"
 import InstructorDashboard from "./instructor/InstructorDashboard"
 import CreateCourse from "./instructor/CreateCourse"
+import InstructorMyCourses from "./instructor/InstructorMyCourses"
+import InstructorReviews from "./instructor/InstructorReviews"
 import AdminDashboard from "./admin/AdminDashboard"
 import StudentProfile from "./student/StudentProfile"
 import ProtectedRoute from "./routes/ProtectedRoute"
 import PublicRoute from "./routes/PublicRoute"
 import AllCourses from "./student/AllCourses"
 import CourseDetails from "./student/CourseDetails"
+import CourseContent from "./student/CourseContent"
 
 function App() {
   return (
@@ -60,6 +63,12 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="learn/:courseId" element={
+            <ProtectedRoute allowedRoles={["STUDENT"]}>
+              <CourseContent />
+            </ProtectedRoute>
+          } />
+
           {/* Protected Instructor Routes */}
           <Route path="instructor-dashboard" element={
             <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
@@ -70,6 +79,18 @@ function App() {
           <Route path="create-course" element={
             <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
               <CreateCourse />
+            </ProtectedRoute>
+          } />
+
+          <Route path="instructor-my-courses" element={
+            <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
+              <InstructorMyCourses />
+            </ProtectedRoute>
+          } />
+
+          <Route path="instructor-reviews" element={
+            <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
+              <InstructorReviews />
             </ProtectedRoute>
           } />
 

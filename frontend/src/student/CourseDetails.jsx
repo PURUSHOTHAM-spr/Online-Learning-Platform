@@ -29,6 +29,22 @@ function CourseDetails() {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
+  // Read progress from localStorage (set by CourseContent page)
+  const completed = (() => {
+    try { return JSON.parse(localStorage.getItem(`progress_${courseId}`)) || {}; }
+    catch { return {}; }
+  })();
+
+  const allLectures = course
+    ? course.sections?.flatMap(s => s.lectures) || []
+    : [];
+  const totalLectures2   = allLectures.length;
+  const completedCount   = allLectures.filter(l => completed[l._id]).length;
+  const progressPct      = totalLectures2 > 0 ? Math.round((completedCount / totalLectures2) * 100) : 0;
+  const progressColor    = progressPct === 100 ? "bg-emerald-500" : progressPct > 50 ? "bg-violet-500" : "bg-amber-500";
+  const progressLabel    = progressPct === 100 ? "Completed! 🎉" : progressPct > 0 ? "In Progress" : "Not Started";
+  const progressTextColor= progressPct === 100 ? "text-emerald-600" : progressPct > 0 ? "text-violet-600" : "text-slate-400";
+
   const hasReviewed = course?.reviews?.some(
     r => r.user?._id === user?._id || r.user === user?._id
   );
@@ -156,6 +172,57 @@ function CourseDetails() {
               {course.description}
             </p>
 
+            {/* ── PROGRESS BAR (enrolled students only) ── */}
+            {isEnrolled && (
+              <div className="mb-6 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-5 max-w-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Your Progress</span>
+                  <span className={`text-sm font-black ${
+                    progressPct === 100 ? "text-emerald-400" : progressPct > 0 ? "text-violet-300" : "text-slate-400"
+                  }`}>{progressPct}%</span>
+                </div>
+
+                {/* Bar */}
+                <div className="h-3 bg-white/20 rounded-full overflow-hidden mb-3">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      progressPct === 100 ? "bg-emerald-400" : progressPct > 50 ? "bg-violet-400" : "bg-amber-400"
+                    }`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">
+                    {completedCount} of {totalLectures2} lectures completed
+                  </span>
+                  <span className={`text-xs font-semibold ${
+                    progressPct === 100 ? "text-emerald-400" :
+                    progressPct > 0    ? "text-violet-300"  : "text-slate-500"
+                  }`}>
+                    {progressPct === 100 ? "🎉 Complete!" : progressPct > 0 ? "In Progress" : "Not started"}
+                  </span>
+                </div>
+
+                {/* Mini lecture dots */}
+                {totalLectures2 > 0 && totalLectures2 <= 20 && (
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {allLectures.map(l => (
+                      <div
+                        key={l._id}
+                        title={l.title}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                          completed[l._id]
+                            ? progressPct === 100 ? "bg-emerald-400" : "bg-violet-400"
+                            : "bg-white/20"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Stats row */}
             <div className="flex flex-wrap gap-6 text-sm text-slate-300">
               <span className="flex items-center gap-2">
@@ -203,11 +270,12 @@ function CourseDetails() {
                     <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
                       <FiCheckCircle size={16} /> You're enrolled in this course
                     </div>
+
                     <Link
-                      to="/my-courses"
-                      className="block text-center w-full py-3 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition"
+                      to={`/learn/${courseId}`}
+                      className="block text-center w-full py-3 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition flex items-center justify-center gap-2"
                     >
-                      Go to My Courses
+                      <FiPlay size={14} /> {progressPct > 0 ? "Continue Learning" : "Start Learning"}
                     </Link>
                   </div>
                 ) : (
@@ -512,6 +580,28 @@ function CourseDetails() {
                 <span className="font-semibold text-slate-700">{item.value}</span>
               </div>
             ))}
+
+            {/* Progress section in sidebar — only for enrolled students */}
+            {isEnrolled && (
+              <div className="border-t border-slate-100 pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progress</span>
+                  <span className={`text-xs font-bold ${progressTextColor}`}>{progressPct}%</span>
+                </div>
+                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${progressColor}`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-400">{completedCount} of {totalLectures2} lectures done</p>
+                {progressPct === 100 && (
+                  <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-700 font-semibold">
+                    <FiCheckCircle size={13} /> Course Complete!
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </aside>
 
