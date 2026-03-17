@@ -54,6 +54,22 @@ function Navbar() {
               My Dashboard
             </NavLink>
           )}
+
+          {user && user.role === "STUDENT" && (
+            <NavLink
+              to="/all-courses"
+              className={({ isActive }) =>
+                `text-sm font-medium transition ${
+                  isActive
+                    ? "text-violet-600"
+                    : "text-gray-700 hover:text-violet-600"
+                }`
+              }
+            >
+              All Courses
+            </NavLink>
+          )}
+
           {user && user.role === "STUDENT" && (
             <NavLink
               to="/my-courses"
