@@ -1,48 +1,30 @@
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import StudentDashboard from './pages/student/StudentDashboard'
-import InstructorDashboard from './pages/instructor/InstructorDashboard'
-import RootLayout from './layouts/RootLayout'
+import { Routes, Route } from "react-router-dom"
+import RootLayout from "./layouts/RootLayout"
+import Home from "./pages/Home"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import StudentDashboard from "./student/StudentDashboard"
+import InstructorDashboard from "./instructor/InstructorDashboard"
 
 function App() {
+  return (
 
-  const routerObj = createBrowserRouter([
-    {
-      path: '/',
-      element: <RootLayout />,
-      children: [
-        {
-          path: "",
-          element: <Home />
-        },
-        {
-          path: "login",
-          element: <Login />
-        },
-        {
-          path: "register",
-          element: <Register />
-        },
-        {
-          path: "admin-dashboard",
-          element: <AdminDashboard />
-        },
-        {
-          path: "student-dashboard",
-          element: <StudentDashboard />
-        },
-        {
-          path: "instructor-dashboard",
-          element: <InstructorDashboard />
-        }
-      ]
-    }
-  ])
+      <Routes>
 
-  return <RouterProvider router={routerObj} />
+        <Route path="/" element={<RootLayout />}>
+
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+
+          <Route path="student/StudentDashboard" element={<StudentDashboard />} />
+          <Route path="instructor/InstructorDashboard" element={<InstructorDashboard />} />
+
+        </Route>
+
+      </Routes>
+
+  )
 }
 
 export default App
