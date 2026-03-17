@@ -113,7 +113,7 @@ function MyCourses() {
               You haven't enrolled in any courses. Explore our catalog and start your learning journey today!
             </p>
             <Link
-              to="/student-dashboard"
+              to="/all-courses"
               className="px-8 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition shadow-lg shadow-violet-200"
             >
               Explore Courses
