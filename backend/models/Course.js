@@ -56,6 +56,31 @@ const userCommentSchema = new mongoose.Schema({
 
 
 
+// Review Schema
+
+const reviewSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+    rating: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5
+    },
+    review: {
+        type: String,
+        required: true,
+        trim: true
+    }
+}, {
+    timestamps: true,
+    versionKey: false
+});
+
+
 // Course Schema
 
 const courseSchema = new mongoose.Schema({
@@ -123,6 +148,11 @@ const courseSchema = new mongoose.Schema({
 
     comments: {
         type: [userCommentSchema],
+        default: []
+    },
+
+    reviews: {
+        type: [reviewSchema],
         default: []
     }
 

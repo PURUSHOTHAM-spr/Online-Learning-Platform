@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import {
   FiBook, FiStar, FiUsers, FiClock, FiPlay,
   FiChevronDown, FiChevronUp, FiCheckCircle,
-  FiArrowLeft, FiBarChart2, FiTag, FiLock
+  FiArrowLeft, FiBarChart2, FiTag, FiLock, FiEdit3
 } from "react-icons/fi";
 
 const levelColor = {
@@ -23,6 +23,15 @@ function CourseDetails() {
   const [isEnrolled,   setIsEnrolled]   = useState(false);
   const [enrolling,    setEnrolling]    = useState(false);
   const [openSections, setOpenSections] = useState({});
+  const [hoverStar,    setHoverStar]    = useState(0);
+  const [reviewForm,   setReviewForm]   = useState({ rating: 0, review: "" });
+  const [submitting,   setSubmitting]   = useState(false);
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const hasReviewed = course?.reviews?.some(
+    r => r.user?._id === user?._id || r.user === user?._id
+  );
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -65,6 +74,23 @@ function CourseDetails() {
 
   const toggleSection = (id) =>
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (reviewForm.rating === 0) { toast.error("Please select a star rating."); return; }
+    if (!reviewForm.review.trim()) { toast.error("Please write a review."); return; }
+    setSubmitting(true);
+    try {
+      const res = await axiosInstance.post(`/user-api/review/${courseId}`, reviewForm);
+      setCourse(res.data.payload);
+      setReviewForm({ rating: 0, review: "" });
+      toast.success("Review submitted! Thank you 🎉");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit review.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const totalLectures = course?.sections?.reduce(
     (acc, s) => acc + (s.lectures?.length || 0), 0
@@ -316,29 +342,157 @@ function CourseDetails() {
             )}
           </div>
 
-          {/* Comments */}
-          {course.comments?.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-7">
-              <h2 className="text-xl font-bold text-slate-800 mb-5">
-                Student Comments ({course.comments.length})
-              </h2>
-              <div className="space-y-4">
-                {course.comments.map((c, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl">
-                    <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                      {c.user?.firstName?.[0] || "U"}
+          {/* ── REVIEWS SECTION ── */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-7">
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <FiStar className="text-amber-400" size={20} />
+                  Student Reviews
+                  <span className="text-base font-normal text-slate-400 ml-1">({course.reviews?.length || 0})</span>
+                </h2>
+                {course.rating > 0 && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-3xl font-black text-slate-800">{course.rating.toFixed(1)}</span>
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <FiStar key={s} size={16}
+                          className={s <= Math.round(course.rating) ? "text-amber-400 fill-amber-400" : "text-slate-300"}
+                          style={s <= Math.round(course.rating) ? {fill: "currentColor"} : {}}
+                        />
+                      ))}
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">
-                        {c.user?.firstName || "Student"} {c.user?.lastName || ""}
-                      </p>
-                      <p className="text-sm text-slate-500 mt-1">{c.comment}</p>
+                    <span className="text-sm text-slate-400">out of 5</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Rating distribution bars */}
+            {course.reviews?.length > 0 && (
+              <div className="mb-8 space-y-1.5">
+                {[5,4,3,2,1].map(star => {
+                  const count = course.reviews.filter(r => r.rating === star).length;
+                  const pct   = course.reviews.length > 0 ? (count / course.reviews.length) * 100 : 0;
+                  return (
+                    <div key={star} className="flex items-center gap-3 text-xs">
+                      <span className="text-slate-500 w-3 text-right">{star}</span>
+                      <FiStar size={11} className="text-amber-400" style={{fill:"currentColor"}} />
+                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{width:`${pct}%`}} />
+                      </div>
+                      <span className="text-slate-400 w-8">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Write a Review form — only for enrolled students who haven't reviewed */}
+            {isEnrolled && !hasReviewed && (
+              <form onSubmit={handleSubmitReview} className="mb-8 bg-violet-50 border border-violet-100 rounded-2xl p-5">
+                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <FiEdit3 size={16} className="text-violet-500" /> Write a Review
+                </h3>
+
+                {/* Star picker */}
+                <div className="flex items-center gap-1 mb-4">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm(f => ({...f, rating: star}))}
+                      onMouseEnter={() => setHoverStar(star)}
+                      onMouseLeave={() => setHoverStar(0)}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <FiStar
+                        size={28}
+                        className={`transition-colors ${
+                          star <= (hoverStar || reviewForm.rating)
+                            ? "text-amber-400"
+                            : "text-slate-300"
+                        }`}
+                        style={star <= (hoverStar || reviewForm.rating) ? {fill:"currentColor"} : {}}
+                      />
+                    </button>
+                  ))}
+                  {reviewForm.rating > 0 && (
+                    <span className="ml-2 text-sm font-semibold text-slate-600">
+                      {["Terrible","Poor","Average","Good","Excellent"][reviewForm.rating - 1]}
+                    </span>
+                  )}
+                </div>
+
+                {/* Review text */}
+                <textarea
+                  value={reviewForm.review}
+                  onChange={e => setReviewForm(f => ({...f, review: e.target.value}))}
+                  placeholder="Share your experience with this course..."
+                  rows={4}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none transition"
+                />
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-3 px-6 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-bold hover:bg-violet-700 transition disabled:opacity-60 flex items-center gap-2"
+                >
+                  {submitting ? <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting...</> : "Submit Review"}
+                </button>
+              </form>
+            )}
+
+            {isEnrolled && hasReviewed && (
+              <div className="mb-8 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4 flex items-center gap-3 text-sm text-emerald-700 font-semibold">
+                <FiCheckCircle size={16} /> You've already reviewed this course. Thank you!
+              </div>
+            )}
+
+            {!isEnrolled && (
+              <div className="mb-8 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm text-slate-500">
+                Enroll in this course to leave a review.
+              </div>
+            )}
+
+            {/* Reviews list */}
+            {course.reviews?.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-6">No reviews yet. Be the first to review!</p>
+            ) : (
+              <div className="space-y-4">
+                {course.reviews.map((rev, i) => (
+                  <div key={i} className="flex items-start gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                      {rev.user?.firstName?.[0] || "S"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                        <p className="text-sm font-bold text-slate-700">
+                          {rev.user?.firstName || "Student"} {rev.user?.lastName || ""}
+                        </p>
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map(s => (
+                            <FiStar key={s} size={13}
+                              className={s <= rev.rating ? "text-amber-400" : "text-slate-300"}
+                              style={s <= rev.rating ? {fill:"currentColor"} : {}}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      {rev.createdAt && (
+                        <p className="text-xs text-slate-400 mb-2">
+                          {new Date(rev.createdAt).toLocaleDateString("en-US", { year:"numeric", month:"short", day:"numeric" })}
+                        </p>
+                      )}
+                      <p className="text-sm text-slate-600 leading-relaxed">{rev.review}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Right sidebar (desktop) — quick stats summary */}

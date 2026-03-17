@@ -102,7 +102,8 @@ userRouter.get('/courses', async (req, res) => {
 userRouter.get('/course/:id', async(req, res)=>{
     try {
         const courseId = req.params.id;
-        const course = await Course.findById(courseId);
+        const course = await Course.findById(courseId)
+            .populate("reviews.user", "firstName lastName");
         if (!course) {
             return res.status(404).json({ message: "course not found" });
         }
@@ -115,3 +116,34 @@ userRouter.get('/course/:id', async(req, res)=>{
     }
 })
 
+// Student review and rating
+
+userRouter.post('/review/:courseId', async(req, res)=>{
+    try {
+        const courseId = req.params.courseId;
+        const userId = req.user._id;
+        const {rating, review} = req.body;
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: "course not found" });
+        }
+
+        const existingReview = course.reviews.find(r => r.user.toString() === userId);
+        if (existingReview) {
+            return res.status(400).json({ message: "already reviewed this course" });
+        }
+
+        course.reviews.push({user: userId, rating, review});
+        course.rating = course.reviews.reduce((acc, r) => acc + r.rating, 0) / course.reviews.length;
+
+        await course.save();
+
+        res.status(200).json({
+            message: "review added successfully",
+            payload: course
+        });
+    } catch(error) {
+        res.status(500).json({message: error.message});
+    }
+})
