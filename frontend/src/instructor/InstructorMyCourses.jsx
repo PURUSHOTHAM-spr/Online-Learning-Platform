@@ -128,13 +128,12 @@ export default function InstructorMyCourses() {
 
               {/* Actions Footer */}
               <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 flex items-center gap-2">
-                <button
-                  disabled
-                  title="Edit functionality coming soon"
+                <Link
+                  to={`/instructor/course/${course._id}`}
                   className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
                 >
-                  <FiEdit3 size={15} /> Edit
-                </button>
+                  <FiEdit3 size={15} /> Manage
+                </Link>
                 <div className="w-px h-4 bg-slate-200"></div>
                 <button
                   onClick={() => handleDelete(course._id, course.title)}
