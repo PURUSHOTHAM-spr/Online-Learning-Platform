@@ -54,8 +54,8 @@ function Login() {
         {/* LEFT SECTION: FORM */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-16">
           <div className="mb-10 text-center lg:text-left">
-            <h1 className="text-4xl font-bold text-[#1e293b] mb-3">Welcome Back</h1>
-            <p className="text-[#64748b]">Enter your credentials to access your account</p>
+            <h1 className="text-4xl font-bold text-violet-700 mb-3">Welcome Back</h1>
+            <p className="text-slate-500">Enter your credentials to access your account</p>
           </div>
 
           <button className="w-full flex items-center justify-center gap-3 py-3 border border-[#e2e8f0] rounded-xl hover:bg-[#f1f5f9] transition-all duration-300 mb-8 font-medium text-[#475569]">
@@ -194,4 +194,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Login;
