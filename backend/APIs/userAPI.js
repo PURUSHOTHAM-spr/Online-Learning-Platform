@@ -2,6 +2,7 @@ import express from "express";
 import { User } from "../models/User.js";
 import { Course } from "../models/Course.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
+import { CourseProgress } from "../models/CourseProgress.js";
 
 export const userRouter = express.Router();
 
@@ -146,4 +147,72 @@ userRouter.post('/review/:courseId', async(req, res)=>{
     } catch(error) {
         res.status(500).json({message: error.message});
     }
-})
+});
+
+
+// --- STUDENT PROGRESS APIS ---
+
+// Get Progress for a single course
+userRouter.get('/progress/:courseId', async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { courseId } = req.params;
+
+        const progress = await CourseProgress.findOne({ user: userId, course: courseId });
+        
+        if (!progress) {
+            return res.status(200).json({ 
+                message: "No progress found", 
+                payload: { completedLectures: [] } 
+            });
+        }
+
+        res.status(200).json({
+            message: "Progress fetched successfully",
+            payload: progress
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Mark lecture as complete/incomplete
+userRouter.post('/progress/:courseId/:lectureId', async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { courseId, lectureId } = req.params;
+
+        // Find or create progress record
+        let progress = await CourseProgress.findOne({ user: userId, course: courseId });
+        
+        if (!progress) {
+            progress = new CourseProgress({
+                user: userId,
+                course: courseId,
+                completedLectures: [lectureId]
+            });
+        } else {
+            // Check if lecture is already completed
+            const isCompleted = progress.completedLectures.includes(lectureId);
+            
+            if (isCompleted) {
+                // Remove it (toggle off)
+                progress.completedLectures = progress.completedLectures.filter(id => id.toString() !== lectureId.toString());
+            } else {
+                // Add it
+                progress.completedLectures.push(lectureId);
+            }
+            progress.lastAccessed = new Date();
+        }
+
+        await progress.save();
+
+        res.status(200).json({
+            message: "Progress updated successfully",
+            payload: progress
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});

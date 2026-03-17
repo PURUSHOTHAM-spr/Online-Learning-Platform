@@ -29,9 +29,7 @@ export default function CourseContent() {
   const [loading,        setLoading]        = useState(true);
   const [isEnrolled,     setIsEnrolled]     = useState(false);
   const [activeLecture,  setActiveLecture]  = useState(null);  // { sectionIdx, lectureIdx }
-  const [completed,      setCompleted]      = useState(() => {
-    try { return JSON.parse(localStorage.getItem(`progress_${courseId}`)) || {}; } catch { return {}; }
-  });
+  const [completed,      setCompleted]      = useState({});
   const [sidebarOpen,    setSidebarOpen]    = useState(true);
   const [openSections,   setOpenSections]   = useState({});
   const [tab,            setTab]            = useState("Overview");
@@ -61,6 +59,20 @@ export default function CourseContent() {
           return;
         }
 
+        // Fetch backend progress
+        try {
+          const progressRes = await axiosInstance.get(`/user-api/progress/${courseId}`);
+          const completedLectures = progressRes.data.payload?.completedLectures || [];
+          
+          const progressMap = {};
+          completedLectures.forEach(id => {
+            progressMap[id] = true;
+          });
+          setCompleted(progressMap);
+        } catch (err) {
+          console.error("Failed to fetch progress", err);
+        }
+
         // Default: open first section, select first lecture
         if (data.sections?.length > 0) {
           setOpenSections({ [data.sections[0]._id]: true });
@@ -78,10 +90,7 @@ export default function CourseContent() {
     fetchAll();
   }, [courseId]);
 
-  /* Persist progress & notes to localStorage */
-  useEffect(() => {
-    localStorage.setItem(`progress_${courseId}`, JSON.stringify(completed));
-  }, [completed, courseId]);
+
 
   useEffect(() => {
     localStorage.setItem(`notes_${courseId}`, JSON.stringify(notes));
@@ -106,20 +115,33 @@ export default function CourseContent() {
     : 0;
 
   /* Completion toggle */
-  const toggleComplete = useCallback((lectureId) => {
-    setCompleted(prev => {
-      const next = { ...prev };
-      if (next[lectureId]) delete next[lectureId];
-      else next[lectureId] = true;
-      return next;
-    });
-  }, []);
+  const toggleComplete = useCallback(async (lectureId) => {
+    try {
+      // Optimistic UI update
+      setCompleted(prev => {
+        const next = { ...prev };
+        if (next[lectureId]) delete next[lectureId];
+        else next[lectureId] = true;
+        return next;
+      });
+
+      // Backend sync
+      await axiosInstance.post(`/user-api/progress/${courseId}/${lectureId}`);
+    } catch (err) {
+      toast.error("Failed to sync progress");
+    }
+  }, [courseId]);
 
   /* Mark current as complete when video ends */
-  const handleVideoEnded = () => {
-    if (currentLecture) {
-      setCompleted(prev => ({ ...prev, [currentLecture._id]: true }));
-      toast.success("Lecture completed! ✅");
+  const handleVideoEnded = async () => {
+    if (currentLecture && !completed[currentLecture._id]) {
+      try {
+        setCompleted(prev => ({ ...prev, [currentLecture._id]: true }));
+        await axiosInstance.post(`/user-api/progress/${courseId}/${currentLecture._id}`);
+        toast.success("Lecture completed! ✅");
+      } catch (err) {
+        toast.error("Failed to sync progress");
+      }
     }
   };
 

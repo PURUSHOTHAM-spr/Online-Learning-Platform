@@ -4,7 +4,7 @@ import { axiosInstance } from "../api/axiosInstance";
 import { toast } from "react-hot-toast";
 import { 
   FiArrowLeft, FiEdit3, FiUsers, FiStar, FiBook, 
-  FiPlay, FiCheckCircle, FiCopy 
+  FiPlay, FiCheckCircle, FiCopy, FiTrendingUp 
 } from "react-icons/fi";
 
 const levelColor = {
@@ -226,6 +226,9 @@ export default function InstructorCourseDetails() {
               <div className="space-y-3">
                 <Link to={`/instructor/course/${course._id}/edit`} className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold text-sm transition">
                   <FiEdit3 size={16} /> Edit Basic Info
+                </Link>
+                <Link to={`/instructor/course/${course._id}/analytics`} className="w-full flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl font-bold text-sm transition shadow-sm border border-indigo-100">
+                  <FiTrendingUp size={16} /> View Analytics
                 </Link>
                 <Link to={`/instructor/course/${course._id}/edit`} className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold text-sm transition">
                   <FiPlay size={16} /> Add / Manage Videos

@@ -4,6 +4,7 @@ import { Course } from "../models/Course.js";
 import { verifyToken, authorizeRole } from "../middlewares/verifyToken.js";
 import { upload } from "../middlewares/multer.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { CourseProgress } from "../models/CourseProgress.js";
 
 export const instructorRouter = express.Router();
 
@@ -117,6 +118,8 @@ instructorRouter.put("/update-course/:courseId", async (req, res) => {
     const instructorId = req.user._id;
     const updates = req.body;
 
+    console.log("UPDATE COURSE REQUEST:", { courseId, instructorId, updates });
+
     const course = await Course.findById(courseId);
 
     if (!course) {
@@ -132,6 +135,8 @@ instructorRouter.put("/update-course/:courseId", async (req, res) => {
       updates,
       { new: true }
     );
+
+    console.log("UPDATED COURSE IN DB:", updatedCourse);
 
     res.json({
       message: "Course updated successfully",
@@ -385,5 +390,234 @@ instructorRouter.delete('/delete-lecture/:courseId/:sectionId/:lectureId', async
 
   } catch (error) {
     res.status(500).json({ message: "Error deleting lecture", error: error.message });
+  }
+});
+
+
+// GET COURSE ANALYTICS
+
+instructorRouter.get("/analytics/:courseId", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const instructorId = req.user._id;
+
+    // 1. Verify course ownership
+    const course = await Course.findById(courseId).populate("sections.lectures");
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    if (course.instructor.toString() !== instructorId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // 2. Fetch all progress records for this course
+    // Also populate user to get names for the leaderboard
+    const progressRecords = await CourseProgress.find({ course: courseId }).populate("user", "firstName lastName email profilePic");
+
+    // Total enrollment (from course model or progress records)
+    const totalEnrolled = course.studentsEnrolled || progressRecords.length;
+
+    // 3. Extranct total lectures count
+    let allLectures = [];
+    course.sections.forEach(sec => {
+      if (sec.lectures) allLectures.push(...sec.lectures);
+    });
+    const totalLecturesCount = allLectures.length;
+
+    if (totalLecturesCount === 0 || progressRecords.length === 0) {
+      return res.json({
+        message: "No analytics data available yet",
+        payload: {
+          averageCompletionRate: 0,
+          totalStudentsContext: totalEnrolled,
+          lectureDropOffs: [],
+          topStudents: []
+        }
+      });
+    }
+
+    // 4. Calculate Average Completion Rate & Top Students
+    let totalPctSum = 0;
+    const studentStats = progressRecords.map(record => {
+      const completedCount = record.completedLectures.length;
+      const pct = Math.round((completedCount / totalLecturesCount) * 100);
+      totalPctSum += pct;
+      return {
+        user: record.user,
+        completedCount,
+        completionPercentage: pct,
+        lastAccessed: record.lastAccessed
+      };
+    });
+
+    const averageCompletionRate = Math.round(totalPctSum / progressRecords.length);
+
+    // Sort students by completion % desc, then by last accessed
+    studentStats.sort((a, b) => b.completionPercentage - a.completionPercentage);
+    const topStudents = studentStats.slice(0, 10); // Top 10 leaderboard
+
+    // 5. Calculate Drop-off Rates per Lecture
+    // Count how many students completed each specific lecture
+    const lectureCompletionCounts = {};
+    allLectures.forEach(l => lectureCompletionCounts[l._id] = 0);
+
+    progressRecords.forEach(record => {
+      record.completedLectures.forEach(lId => {
+        if (lectureCompletionCounts[lId] !== undefined) {
+          lectureCompletionCounts[lId]++;
+        }
+      });
+    });
+
+    // Format for charting
+    const lectureDropOffs = allLectures.map((l, index) => {
+      const completes = lectureCompletionCounts[l._id] || 0;
+      const pct = Math.round((completes / progressRecords.length) * 100);
+      return {
+        id: l._id,
+        title: l.title,
+        index: index + 1,
+        completedBy: completes,
+        completionRate: pct
+      };
+    });
+
+    res.json({
+      message: "Analytics fetched successfully",
+      payload: {
+        averageCompletionRate,
+        totalEnrolled,
+        totalActiveProgress: progressRecords.length,
+        lectureDropOffs,
+        topStudents
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching analytics", error: error.message });
+  }
+});
+
+
+// GET GLOBAL REVIEWS ANALYTICS
+
+instructorRouter.get("/global-reviews-analytics", async (req, res) => {
+  try {
+    const instructorId = req.user._id;
+
+    // 1. Fetch all courses for this instructor
+    const courses = await Course.find({ instructor: instructorId })
+      .populate("reviews.user", "firstName lastName profilePic");
+
+    if (!courses || courses.length === 0) {
+      return res.json({
+        message: "No courses found",
+        payload: {
+          reviews: [],
+          globalAverageCompletion: 0,
+          totalActiveLearners: 0,
+          totalEnrolled: 0
+        }
+      });
+    }
+
+    // 2. Aggregate all reviews across all courses
+    let allReviews = [];
+    let totalEnrolledContext = 0;
+    
+    // We also need all course IDs to fetch progress records
+    const courseIds = courses.map(c => c._id);
+
+    // Calculate total enrolled across all courses
+    courses.forEach(c => {
+      totalEnrolledContext += (c.studentsEnrolled || 0);
+      
+      if (c.reviews && c.reviews.length > 0) {
+        c.reviews.forEach(review => {
+          // Convert Mongoose subdocument to plain object so we can append data
+          const revObj = review.toObject();
+          revObj.course = { _id: c._id, title: c.title }; 
+          
+          // Calculate total lectures for this specific course
+          let totalLec = 0;
+          c.sections.forEach(sec => {
+            if (sec.lectures) totalLec += sec.lectures.length;
+          });
+          revObj.courseTotalLectures = totalLec;
+          
+          allReviews.push(revObj);
+        });
+      }
+    });
+
+    // 3. Fetch all progress records for these courses
+    const allProgressRecords = await CourseProgress.find({ course: { $in: courseIds } });
+    
+    const totalActiveLearners = allProgressRecords.length;
+
+    // Calculate Global Average Completion
+    let globalTotalPctSum = 0;
+    
+    // Create a fast lookup map for student progress: progressMap[courseId][userId] = completionPct
+    const progressMap = {};
+    
+    allProgressRecords.forEach(record => {
+      const cIdStr = record.course.toString();
+      const uIdStr = record.user.toString();
+      
+      if (!progressMap[cIdStr]) progressMap[cIdStr] = {};
+      
+      // Calculate this record's completion %
+      const courseObj = courses.find(c => c._id.toString() === cIdStr);
+      let tLec = 0;
+      if (courseObj) {
+        courseObj.sections.forEach(sec => { if (sec.lectures) tLec += sec.lectures.length; });
+      }
+      
+      let pct = 0;
+      if (tLec > 0) {
+        pct = Math.round((record.completedLectures.length / tLec) * 100);
+      }
+      
+      progressMap[cIdStr][uIdStr] = pct;
+      globalTotalPctSum += pct;
+    });
+
+    const globalAverageCompletion = totalActiveLearners > 0 
+      ? Math.round(globalTotalPctSum / totalActiveLearners) 
+      : 0;
+
+    // 4. Attach completion % to each review
+    allReviews = allReviews.map(review => {
+      let studentCompletionPct = 0;
+      
+      if (review.user && review.user._id) {
+        const uId = review.user._id.toString();
+        const cId = review.course._id.toString();
+        
+        if (progressMap[cId] && progressMap[cId][uId] !== undefined) {
+          studentCompletionPct = progressMap[cId][uId];
+        }
+      }
+      
+      return {
+        ...review,
+        studentCompletionPct
+      };
+    });
+
+    // Sort newest reviews first
+    allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({
+      message: "Global reviews analytics fetched successfully",
+      payload: {
+        reviews: allReviews,
+        globalAverageCompletion,
+        totalActiveLearners,
+        totalEnrolled: totalEnrolledContext
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching global analytics", error: error.message });
   }
 });

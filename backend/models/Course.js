@@ -106,6 +106,11 @@ const courseSchema = new mongoose.Schema({
         required: [true, "course level is required"]
     },
 
+    price: {
+        type: Number,
+        default: 0
+    },
+
     courseOutcomes: {
         type: [String],
         default: []

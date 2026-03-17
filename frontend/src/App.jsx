@@ -10,6 +10,7 @@ import CreateCourse from "./instructor/CreateCourse"
 import InstructorMyCourses from "./instructor/InstructorMyCourses"
 import InstructorCourseDetails from "./instructor/InstructorCourseDetails"
 import EditCourse from "./instructor/EditCourse"
+import InstructorAnalytics from "./instructor/InstructorAnalytics"
 import InstructorReviews from "./instructor/InstructorReviews"
 import AdminDashboard from "./admin/AdminDashboard"
 import StudentProfile from "./student/StudentProfile"
@@ -99,6 +100,12 @@ function App() {
           <Route path="instructor/course/:courseId/edit" element={
             <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
               <EditCourse />
+            </ProtectedRoute>
+          } />
+
+          <Route path="instructor/course/:courseId/analytics" element={
+            <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
+              <InstructorAnalytics />
             </ProtectedRoute>
           } />
 
