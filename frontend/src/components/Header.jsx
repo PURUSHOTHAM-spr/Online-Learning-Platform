@@ -19,8 +19,7 @@ function Navbar() {
         {/* Logo */}
         <NavLink
           to="/"
-          className="text-2xl font-bold text-violet-600 hover:text-violet-500 transition"
-        >
+          className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
           CourseHub
         </NavLink>
 
