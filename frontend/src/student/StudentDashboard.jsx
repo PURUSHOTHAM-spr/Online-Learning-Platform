@@ -240,12 +240,29 @@ function StudentDashboard() {
 function CourseCard({ course, enrolled, levelColor, onEnroll, enrollingId }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group">
-      <div className="h-3 bg-gradient-to-r from-violet-500 to-indigo-500 group-hover:from-violet-600 group-hover:to-indigo-600 transition-all"></div>
-      <div className="p-6 flex flex-col flex-1">
-        <div className="flex justify-between items-start mb-3">
-          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${levelColor[course.courseLevel] || "text-slate-600 bg-slate-100"}`}>
+      {/* Thumbnail */}
+      <div className="relative overflow-hidden h-40 bg-gradient-to-br from-violet-500 to-indigo-600 flex-shrink-0">
+        {course.thumbnail ? (
+          <img
+            src={course.thumbnail}
+            alt={course.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-500 group-hover:from-violet-700 group-hover:to-indigo-600 transition-all">
+            <FiBook size={36} className="text-white/50" />
+          </div>
+        )}
+        {/* Level badge overlay */}
+        <div className="absolute top-3 left-3">
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm ${(levelColor[course.courseLevel] || "text-slate-600").split(" ")[0]}`}>
             {course.courseLevel}
           </span>
+        </div>
+      </div>
+      {/* Card Body */}
+      <div className="p-6 flex flex-col flex-1">
+        <div className="flex justify-between items-center mb-3">
           <span className="text-xs text-slate-400 font-medium">{course.category}</span>
         </div>
         <h3 className="font-bold text-slate-800 text-base mb-2 line-clamp-2 leading-snug">

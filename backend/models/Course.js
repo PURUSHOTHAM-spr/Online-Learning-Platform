@@ -116,6 +116,11 @@ const courseSchema = new mongoose.Schema({
         default: true
     },
 
+    thumbnail: {
+        type: String,
+        default: ""
+    },
+
     comments: {
         type: [userCommentSchema],
         default: []

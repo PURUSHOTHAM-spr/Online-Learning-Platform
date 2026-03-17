@@ -12,7 +12,7 @@ instructorRouter.use(verifyToken, authorizeRole("INSTRUCTOR", "ADMIN"));
 
 // CREATE COURSE
 
-instructorRouter.post("/create-course", async (req, res) => {
+instructorRouter.post("/create-course", upload.single("thumbnail"), async (req, res) => {
   try {
     const courseData = req.body;
     const instructorId = req.user._id;
@@ -23,9 +23,19 @@ instructorRouter.post("/create-course", async (req, res) => {
       return res.status(404).json({ message: "Instructor not found" });
     }
 
+    // Upload thumbnail to Cloudinary if provided
+    let thumbnailUrl = "";
+    if (req.file) {
+      const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+      if (cloudinaryResponse) {
+        thumbnailUrl = cloudinaryResponse.secure_url;
+      }
+    }
+
     const courseDoc = await Course.create({
       ...courseData,
-      instructor: instructorId
+      instructor: instructorId,
+      thumbnail: thumbnailUrl
     });
 
     res.json({

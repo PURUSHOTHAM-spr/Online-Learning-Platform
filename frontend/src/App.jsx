@@ -8,6 +8,7 @@ import MyCourses from "./student/MyCourses"
 import InstructorDashboard from "./instructor/InstructorDashboard"
 import CreateCourse from "./instructor/CreateCourse"
 import AdminDashboard from "./admin/AdminDashboard"
+import StudentProfile from "./student/StudentProfile"
 import ProtectedRoute from "./routes/ProtectedRoute"
 import PublicRoute from "./routes/PublicRoute"
 
@@ -62,6 +63,13 @@ function App() {
           <Route path="admin-dashboard" element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Profile - Student Only */}
+          <Route path="profile" element={
+            <ProtectedRoute allowedRoles={["STUDENT"]}>
+              <StudentProfile />
             </ProtectedRoute>
           } />
 
