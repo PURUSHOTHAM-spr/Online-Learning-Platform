@@ -104,3 +104,29 @@ DELETE http://localhost:3000/instructor-api/delete-section/69b82c07dab1159008342
 
 ### Delete lecture
 DELETE http://localhost:3000/instructor-api/delete-lecture/69b82c07dab115900834218a/69b82c07dab115900834218d/69b82c07dab115900834218e
+
+
+### Get single course
+GET http://localhost:3000/user-api/course/69b82c07dab115900834218a
+
+
+// Admin api routes
+
+### Get all users
+GET http://localhost:3000/admin-api/users
+
+### Update user status (Activate/Deactivate)
+PATCH http://localhost:3000/admin-api/users/69b7cd4671b24b7980911200/status
+Content-Type: application/json
+
+{
+    "isActive": false
+}
+
+### Update user role
+PATCH http://localhost:3000/admin-api/users/USER_ID_HERE/role
+Content-Type: application/json
+
+{
+    "role": "INSTRUCTOR"
+}
