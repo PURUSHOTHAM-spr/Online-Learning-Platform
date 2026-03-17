@@ -53,6 +53,7 @@ POST http://localhost:3000/instructor-api/create-course
 Content-Type: application/json
 
 {
+  
     "title": "Node.js and Express Masterclass",
     "description": "Build scalable backend applications using Node.js and Express.",
     "courseOutcomes": [
