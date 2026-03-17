@@ -34,7 +34,9 @@ const InstructorDashboard = ({ courses = [] }) => {
       {/* 🔵 SIDEBAR (Fixed) */}
       <aside className="w-64 bg-[#0F172A] text-white flex flex-col p-6 sticky top-0 h-screen">
         <div className="mb-10">
-         
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            
+          </h1>
           <p className="text-xs text-slate-400">Instructor Dashboard</p>
         </div>
 

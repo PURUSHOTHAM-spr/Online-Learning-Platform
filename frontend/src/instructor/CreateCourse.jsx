@@ -1,23 +1,21 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { FiUploadCloud, FiBook, FiAlignLeft, FiTag, FiBarChart2, FiImage } from "react-icons/fi";
+import { FiUploadCloud, FiImage, FiChevronLeft } from "react-icons/fi";
 
 function CreateCourse() {
   const navigate = useNavigate();
-
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [thumbnail, setThumbnail] = useState(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
     category: "",
     courseLevel: "Beginner",
-    price: ""
+    price: "",
   });
-
-  const [thumbnail, setThumbnail] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -27,46 +25,22 @@ function CreateCourse() {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      setThumbnail(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const createCourse = async (e) => {
-    e.preventDefault();
-
-    if (!form.title || !form.description || !form.category || !form.price) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+    setLoading(true);
 
     try {
-      setLoading(true);
-
       const formData = new FormData();
-      Object.keys(form).forEach((key) => {
-        formData.append(key, form[key]);
+      Object.keys(form).forEach((key) => formData.append(key, form[key]));
+      if (thumbnail) formData.append("thumbnail", thumbnail);
+
+      const res = await axiosInstance.post("/instructor-api/create-course", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      if (thumbnail) {
-        formData.append("thumbnail", thumbnail);
-      }
-
-      const res = await axiosInstance.post(
-        "/instructor-api/create-course",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      toast.success(res.data.message || "Course created!");
-      navigate("/instructor-dashboard");
-
+      toast.success("Course Created Successfully!");
+      navigate("/instructor"); // Go back to dashboard
     } catch (err) {
-      console.log(err);
       toast.error(err.response?.data?.message || "Failed to create course");
     } finally {
       setLoading(false);
@@ -74,99 +48,129 @@ function CreateCourse() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-
-      {/* HEADER */}
-      <div className="bg-gradient-to-r from-violet-700 to-indigo-600 px-8 py-10 text-white">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-violet-200 text-sm font-medium mb-1">Instructor Panel</p>
-          <h1 className="text-3xl font-bold">Create a New Course</h1>
-          <p className="text-violet-200 text-sm mt-1">Share your knowledge with the world.</p>
-        </div>
+    <div className="max-w-4xl mx-auto">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between mb-8">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition"
+        >
+          <FiChevronLeft /> Back to Dashboard
+        </button>
+        <h2 className="text-2xl font-bold">Create New Course</h2>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        <form onSubmit={createCourse} className="space-y-6">
-
-          {/* THUMBNAIL */}
-          <div className="bg-white p-6 rounded-xl">
-            <label className="font-bold mb-2 flex items-center gap-2">
-              <FiImage /> Thumbnail
-            </label>
-
-            <div
-              onDrop={handleDrop}
-              onDragOver={(e) => e.preventDefault()}
-              className="border-2 border-dashed p-6 text-center cursor-pointer"
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        {/* LEFT COLUMN: Thumbnail Upload */}
+        <div className="md:col-span-1 space-y-6">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <label className="block text-sm font-semibold text-slate-700 mb-4">Course Thumbnail</label>
+            <div 
+              onClick={() => document.getElementById('fileInput').click()}
+              className="relative group aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition"
             >
               {preview ? (
-                <img src={preview} className="w-full h-40 object-cover" />
+                <img src={preview} alt="Preview" className="w-full h-full object-cover rounded-2xl" />
               ) : (
-                <p>Drag & drop or click</p>
+                <div className="text-center p-4">
+                  <FiUploadCloud className="mx-auto text-slate-400 mb-2" size={32} />
+                  <p className="text-xs text-slate-500">Click to upload image</p>
+                </div>
               )}
+              <input id="fileInput" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
+              *Upload a high-resolution image (16:9). Recommended size: 1280x720px.
+            </p>
+          </div>
+        </div>
 
-              <input
-                type="file"
-                className="hidden"
-                onChange={handleFileChange}
+        {/* RIGHT COLUMN: Form Details */}
+        <div className="md:col-span-2 space-y-6">
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Course Title</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Master React in 30 Days"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none transition"
+                value={form.title}
+                onChange={(e) => setForm({...form, title: e.target.value})}
+                required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+              <textarea 
+                rows="4"
+                placeholder="What will students learn in this course?"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none transition"
+                value={form.description}
+                onChange={(e) => setForm({...form, description: e.target.value})}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Development"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  value={form.category}
+                  onChange={(e) => setForm({...form, category: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Price (₹)</label>
+                <input 
+                  type="number" 
+                  placeholder="499"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  value={form.price}
+                  onChange={(e) => setForm({...form, price: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Difficulty Level</label>
+              <select 
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none transition appearance-none"
+                value={form.courseLevel}
+                onChange={(e) => setForm({...form, courseLevel: e.target.value})}
+              >
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+              </select>
             </div>
           </div>
 
-          {/* FORM */}
-          <div className="bg-white p-6 rounded-xl space-y-4">
-
-            <input
-              placeholder="Title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full border p-2 rounded"
-            />
-
-            <textarea
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full border p-2 rounded"
-            />
-
-            <input
-              placeholder="Category"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full border p-2 rounded"
-            />
-
-            <select
-              value={form.courseLevel}
-              onChange={(e) => setForm({ ...form, courseLevel: e.target.value })}
-              className="w-full border p-2 rounded"
+          <div className="flex justify-end gap-4">
+            <button 
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-8 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 transition"
             >
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-            </select>
-
-            <input
-              type="number"
-              placeholder="Price ₹"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-              className="w-full border p-2 rounded"
-            />
-
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              disabled={loading}
+              className="px-10 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow-lg shadow-blue-200 transition disabled:opacity-50"
+            >
+              {loading ? "Publishing..." : "Publish Course"}
+            </button>
           </div>
+        </div>
 
-          <button
-            type="submit"
-            className="w-full bg-violet-600 text-white p-3 rounded"
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "Create Course"}
-          </button>
-
-        </form>
-      </div>
+      </form>
     </div>
   );
 }
