@@ -1,112 +1,60 @@
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Autoplay } from "swiper/modules";
-
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-
-const slides = [
-  {
-  title: "Master React Development",
-  description:
-    "Build modern user interfaces using React, hooks, and advanced state management.",
-  image:
-    "https://img.freepik.com/free-photo/programmer-working-computer-office_1098-18699.jpg",
-},
-
-{
-  title: "Learn Backend with Node.js",
-  description:
-    "Create powerful REST APIs using Node.js, Express, and MongoDB.",
-  image:
-    "https://img.freepik.com/free-photo/programmer-working-laptop-dark-room_1098-18690.jpg",
-},
-
-{
-  title: "Complete JavaScript Bootcamp",
-  description:
-    "Master JavaScript from basics to advanced concepts including ES6, async programming, and DOM manipulation.",
-  image:
-    "https://img.freepik.com/free-photo/programming-background-with-person-working-with-codes-computer_23-2150010125.jpg",
-},
-
-{
-  title: "Become a Data Structures Expert",
-  description:
-    "Learn algorithms, problem solving, and crack coding interviews with confidence.",
-  image:
-    "https://img.freepik.com/free-photo/businesswoman-working-laptop_23-2147980803.jpg",
-},
-
-{
-  title: "Build Real World MERN Projects",
-  description:
-    "Develop complete applications using MongoDB, Express, React, and Node.",
-  image:
-    "https://img.freepik.com/free-photo/team-working-animation-project_23-2149269877.jpg",
-},
-
-{
-  title: "UI/UX Design Fundamentals",
-  description:
-    "Design beautiful and user-friendly web interfaces with modern tools and techniques.",
-  image:
-    "https://img.freepik.com/free-photo/ui-ux-representations-with-laptop_23-2150201871.jpg",
-},
-];
-
 function HeroSlider() {
   return (
+    <section className="relative overflow-hidden rounded-3xl border border-[#dfe1e8] bg-linear-to-br from-[#fff5f7] via-[#f6f9ff] to-[#eef8f7] p-8 lg:p-14">
+      <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-[#0f7c90]/10 blur-2xl" />
+      <div className="absolute -bottom-12 left-20 h-40 w-40 rounded-full bg-[#f78da7]/20 blur-2xl" />
 
-    <Swiper
-      modules={[Navigation, Pagination, Autoplay]}
-      navigation
-      pagination={{ clickable: true }}
-      autoplay={{ delay: 4000 }}
-      loop={true}
-      className="bg-gray-100 rounded-xl"
-    >
+      <div className="relative grid items-center gap-10 lg:grid-cols-2">
+        <div>
+          <p className="mb-3 inline-block rounded-full bg-[#1c1d1f] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-white">
+            Sale ends tonight
+          </p>
+          <h1 className="max-w-xl text-4xl font-black leading-tight text-[#1c1d1f] lg:text-5xl">
+            Skills that move your career forward.
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-[#3e4143] lg:text-lg">
+            Learn from expert instructors with practical projects, career paths,
+            and learner-first content curated to help you land your next role.
+          </p>
 
-      {slides.map((slide, i) => (
-
-        <SwiperSlide key={i}>
-
-          <div className="flex items-center justify-between p-12">
-
-            {/* LEFT CONTENT */}
-
-            <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
-
-              <h2 className="text-3xl font-bold mb-3">
-                {slide.title}
-              </h2>
-
-              <p className="text-gray-600 mb-5">
-                {slide.description}
-              </p>
-
-              <button className="bg-purple-600 text-white px-5 py-3 rounded-lg">
-                Learn more
-              </button>
-
-            </div>
-
-
-            {/* RIGHT IMAGE */}
-
-            <img
-              src={slide.image}
-              className="h-72 object-contain"
-            />
-
+          <div className="mt-7 flex flex-wrap gap-3">
+            <button className="rounded bg-[#1c1d1f] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0b0c0d]">
+              Explore courses
+            </button>
+            <button className="rounded border border-[#1c1d1f] px-5 py-3 text-sm font-bold text-[#1c1d1f] transition hover:bg-white">
+              View learning paths
+            </button>
           </div>
 
-        </SwiperSlide>
+          <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-[#4d5156]">
+            <span>50K+ learners</span>
+            <span>1,200+ classes</span>
+            <span>4.8 average rating</span>
+          </div>
+        </div>
 
-      ))}
+        <div className="rounded-2xl border border-[#d9dbe3] bg-white p-4 shadow-[0_20px_50px_-24px_rgba(17,24,39,0.45)]">
+          <img
+            src="https://img.freepik.com/free-photo/programmer-working-computer-office_1098-18699.jpg"
+            alt="Students learning online"
+            className="h-80 w-full rounded-xl object-cover lg:h-85"
+          />
+        </div>
+      </div>
 
-    </Swiper>
-
+      <div className="relative mt-10 rounded-2xl border border-[#eceef3] bg-white px-4 py-5 lg:px-8">
+        <p className="text-center text-sm font-medium text-[#6a6f73]">
+          Trusted by teams at
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-[#2d2f31] md:grid-cols-5">
+          <span>Acme Corp</span>
+          <span>InnoSoft</span>
+          <span>BrightLabs</span>
+          <span>NextWave</span>
+          <span>DevNexa</span>
+        </div>
+      </div>
+    </section>
   );
 }
 
