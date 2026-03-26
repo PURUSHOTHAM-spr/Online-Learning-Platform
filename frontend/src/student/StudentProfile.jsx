@@ -102,7 +102,7 @@ function StudentProfile() {
           <div className="px-8 pt-8 pb-8 flex items-start gap-6 flex-wrap">
 
             {/* Avatar */}
-            <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center text-white text-4xl font-black shadow-2xl -mt-16 ring-4 ring-white flex-shrink-0">
+            <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center text-white text-4xl font-black shadow-2xl -mt-2 ring-4 ring-white flex-shrink-0">
               {initials}
             </div>
 

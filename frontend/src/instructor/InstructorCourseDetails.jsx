@@ -69,13 +69,13 @@ export default function InstructorCourseDetails() {
           >
             <FiEdit3 size={16} /> Edit Course
           </Link>
-          <Link 
+          {/* <Link 
             to={`/course/${course._id}`} // Link to the public page
             target="_blank"
             className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-slate-900 transition text-sm"
           >
             Preview as Student
-          </Link>
+          </Link> */}
         </div>
       </div>
 

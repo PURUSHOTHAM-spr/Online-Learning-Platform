@@ -25,7 +25,7 @@ instructorRouter.use(verifyToken, authorizeRole("INSTRUCTOR", "ADMIN"));
 instructorRouter.get("/generate-upload-signature", (req, res) => {
   const timestamp = Math.round(new Date().getTime() / 1000);
   const folder = "course-videos";
-  const paramsToSign = { timestamp, folder, resource_type: "video" };
+  const paramsToSign = { timestamp, folder };
 
   const signature = cloudinary.utils.api_sign_request(
     paramsToSign,
