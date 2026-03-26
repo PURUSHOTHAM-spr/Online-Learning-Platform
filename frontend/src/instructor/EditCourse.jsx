@@ -16,11 +16,12 @@ export default function EditCourse() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
 
-  // New section form
   const [newSectionTitle, setNewSectionTitle] = useState("");
   // New lecture form (keyed by section ID)
   const [newLectureTitle, setNewLectureTitle] = useState({});
-  const [newLectureUrl, setNewLectureUrl] = useState({});
+  const [newLectureVideo, setNewLectureVideo] = useState({});
+  const [uploadingLecture, setUploadingLecture] = useState({});
+  const [uploadProgress, setUploadProgress] = useState({}); // sectionId → 0-100
   const [expandedSections, setExpandedSections] = useState({});
 
   useEffect(() => {
@@ -108,19 +109,67 @@ export default function EditCourse() {
 
   const handleAddLecture = async (sectionId) => {
     const title = newLectureTitle[sectionId];
-    const url = newLectureUrl[sectionId];
-    if (!title || !title.trim() || !url || !url.trim()) {
-      toast.error("Lecture title and video URL are required");
+    const videoFile = newLectureVideo[sectionId];
+    if (!title || !title.trim() || !videoFile) {
+      toast.error("Lecture title and a video file are required");
       return;
     }
+
+    setUploadingLecture(prev => ({ ...prev, [sectionId]: true }));
+    setUploadProgress(prev => ({ ...prev, [sectionId]: 0 }));
+
     try {
-      const res = await axiosInstance.post(`/instructor-api/add-lecture/${courseId}/${sectionId}`, { title, videoUrl: url });
+      // Step 1: get a signed upload signature from our backend
+      const sigRes = await axiosInstance.get("/instructor-api/generate-upload-signature");
+      const { signature, timestamp, folder, cloudName, apiKey } = sigRes.data;
+
+      // Step 2: upload directly from browser to Cloudinary via XHR (so we get progress events)
+      const videoUrl = await new Promise((resolve, reject) => {
+        const fd = new FormData();
+        fd.append("file", videoFile);
+        fd.append("api_key", apiKey);
+        fd.append("timestamp", timestamp);
+        fd.append("signature", signature);
+        fd.append("folder", folder);
+        fd.append("resource_type", "video");
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(prev => ({ ...prev, [sectionId]: pct }));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            resolve(data.secure_url);
+          } else {
+            reject(new Error("Cloudinary upload failed"));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(fd);
+      });
+
+      // Step 3: save lecture with the returned URL into our DB
+      const res = await axiosInstance.post(
+        `/instructor-api/add-lecture/${courseId}/${sectionId}`,
+        { title, videoUrl }
+      );
       setCourse(res.data.payload);
-      setNewLectureTitle({ ...newLectureTitle, [sectionId]: "" });
-      setNewLectureUrl({ ...newLectureUrl, [sectionId]: "" });
-      toast.success("Lecture published");
+      setNewLectureTitle(prev => ({ ...prev, [sectionId]: "" }));
+      setNewLectureVideo(prev => ({ ...prev, [sectionId]: null }));
+      setUploadProgress(prev => ({ ...prev, [sectionId]: 0 }));
+      toast.success("Lecture uploaded and published! 🎉");
     } catch (err) {
-      toast.error("Failed to add lecture");
+      console.error(err);
+      toast.error(err.message || "Failed to upload lecture");
+    } finally {
+      setUploadingLecture(prev => ({ ...prev, [sectionId]: false }));
     }
   };
 
@@ -388,19 +437,42 @@ export default function EditCourse() {
                                 className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition font-medium text-slate-700"
                               />
                               <input 
-                                type="url" 
-                                placeholder="Video URL (e.g. YouTube, mp4)"
-                                value={newLectureUrl[section._id] || ""}
-                                onChange={(e) => setNewLectureUrl({...newLectureUrl, [section._id]: e.target.value})}
-                                className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition font-medium text-slate-700"
+                                type="file" 
+                                accept="video/*"
+                                onChange={(e) => setNewLectureVideo({...newLectureVideo, [section._id]: e.target.files[0]})}
+                                className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                               />
                               <button 
                                 onClick={() => handleAddLecture(section._id)}
-                                className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-900 transition flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-slate-900/20"
+                                disabled={uploadingLecture[section._id]}
+                                className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-900 disabled:opacity-60 transition flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-slate-900/20 w-36"
                               >
-                                Add
+                                {uploadingLecture[section._id] ? (
+                                  <span className="text-sm font-black tabular-nums">
+                                    {uploadProgress[section._id] < 100
+                                      ? `${uploadProgress[section._id]}%`
+                                      : "Saving…"}
+                                  </span>
+                                ) : (
+                                  "Upload & Add"
+                                )}
                               </button>
                             </div>
+                            {uploadingLecture[section._id] && (
+                              <div className="mt-3">
+                                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300"
+                                    style={{ width: `${uploadProgress[section._id] || 0}%` }}
+                                  />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1 font-medium">
+                                  {uploadProgress[section._id] < 100
+                                    ? `Uploading to Cloudinary… ${uploadProgress[section._id]}%`
+                                    : "Saving lecture to course…"}
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                         </div>

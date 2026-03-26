@@ -44,7 +44,7 @@ function CoursesSection() {
         </div>
 
         <Link
-          to="/all-courses"
+          to='/instructor-all-courses'
           className="w-fit flex items-center gap-1 rounded border border-[#1c1d1f] px-4 py-2 text-sm font-bold text-[#1c1d1f] transition hover:bg-[#f7f9fa]"
         >
           Show all courses <FiChevronRight size={15} />

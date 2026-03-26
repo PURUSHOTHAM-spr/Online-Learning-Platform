@@ -4,12 +4,42 @@ import { Course } from "../models/Course.js";
 import { verifyToken, authorizeRole } from "../middlewares/verifyToken.js";
 import { upload } from "../middlewares/multer.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { v2 as cloudinary } from "cloudinary";
+import { config } from "dotenv";
 import { CourseProgress } from "../models/CourseProgress.js";
+
+config();
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const instructorRouter = express.Router();
 
 // Apply authentication and check if user is an instructor
 instructorRouter.use(verifyToken, authorizeRole("INSTRUCTOR", "ADMIN"));
+
+// GENERATE SIGNED CLOUDINARY UPLOAD PARAMS
+// The frontend calls this first, then uploads the file directly to Cloudinary.
+instructorRouter.get("/generate-upload-signature", (req, res) => {
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const folder = "course-videos";
+  const paramsToSign = { timestamp, folder, resource_type: "video" };
+
+  const signature = cloudinary.utils.api_sign_request(
+    paramsToSign,
+    process.env.CLOUDINARY_API_SECRET
+  );
+
+  res.json({
+    signature,
+    timestamp,
+    folder,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey:    process.env.CLOUDINARY_API_KEY,
+  });
+});
 
 // CREATE COURSE
 
@@ -71,6 +101,110 @@ instructorRouter.get("/my-courses", async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Error fetching courses", error });
+  }
+});
+
+
+// GET DASHBOARD STATS
+
+instructorRouter.get("/dashboard-stats", async (req, res) => {
+  try {
+    const instructorId = req.user._id;
+
+    // 1. Fetch courses for this instructor
+    const courses = await Course.find({ instructor: instructorId });
+
+    if (!courses) {
+      return res.status(404).json({ message: "Courses not found for stats" });
+    }
+
+    const courseIds = courses.map(c => c._id);
+    let totalStudents = 0;
+    let totalRevenue = 0;
+    let activeCount = 0;
+    let totalRating = 0;
+    let totalRatingCount = 0;
+    const categoryCount = {};
+
+    courses.forEach(c => {
+      const enrolled = c.studentsEnrolled || 0;
+      totalStudents += enrolled;
+      totalRevenue += enrolled * (c.price || 0);
+
+      if (c.isActive) activeCount++;
+
+      if (c.rating && c.ratingCount) {
+        totalRating += c.rating * c.ratingCount;
+        totalRatingCount += c.ratingCount;
+      }
+
+      if (c.category) {
+        categoryCount[c.category] = (categoryCount[c.category] || 0) + enrolled;
+      }
+    });
+
+    const averageRating = totalRatingCount > 0 ? (totalRating / totalRatingCount).toFixed(1) : "0.0";
+
+    const categoriesData = Object.keys(categoryCount).map(category => ({
+      label: category,
+      count: categoryCount[category],
+      percent: totalStudents > 0 ? Math.round((categoryCount[category] / totalStudents) * 100) : 0
+    })).sort((a, b) => b.percent - a.percent);
+
+    // 2. Fetch CourseProgress for chart (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1); // Start of that month
+
+    const progressRecords = await CourseProgress.find({
+      course: { $in: courseIds },
+      createdAt: { $gte: sixMonthsAgo }
+    }).populate("course", "price");
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const chartData = [];
+    const chartDataMap = {}; // Maps "YYYY-MM" to index in chartData
+
+    for(let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const year = d.getFullYear();
+      const month = d.getMonth();
+      const key = `${year}-${month}`;
+      chartDataMap[key] = chartData.length;
+      chartData.push({
+        name: monthNames[month],
+        revenue: 0
+      });
+    }
+
+    progressRecords.forEach(record => {
+      // Must compute from createdAt of the progress record
+      const crDate = new Date(record.createdAt);
+      const key = `${crDate.getFullYear()}-${crDate.getMonth()}`;
+      if (chartDataMap[key] !== undefined) {
+        const index = chartDataMap[key];
+        const price = (record.course && record.course.price) ? record.course.price : 0;
+        chartData[index].revenue += price;
+      }
+    });
+
+    res.json({
+      message: "Dashboard stats fetched successfully",
+      payload: {
+        stats: {
+          totalStudents,
+          totalRevenue,
+          activeCount,
+          averageRating
+        },
+        categoriesData,
+        chartData
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching dashboard stats", error: error.message });
   }
 });
 
@@ -254,11 +388,15 @@ instructorRouter.put("/update-section/:courseId/:sectionId", async (req, res) =>
 
 // ADD LECTURE
 
-instructorRouter.post("/add-lecture/:courseId/:sectionId", upload.single("video"), async (req, res) => {
+instructorRouter.post("/add-lecture/:courseId/:sectionId", async (req, res) => {
   try {
 
     const { courseId, sectionId } = req.params;
-    const { title, description, isPreview } = req.body;
+    const { title, description, isPreview, videoUrl, duration } = req.body;
+
+    if (!videoUrl) {
+      return res.status(400).json({ message: "videoUrl is required" });
+    }
 
     const course = await Course.findById(courseId);
 
@@ -272,31 +410,13 @@ instructorRouter.post("/add-lecture/:courseId/:sectionId", upload.single("video"
       return res.status(404).json({ message: "Section not found" });
     }
 
-    // Handle Cloudinary upload if a video file was included
-    let videoUrl = "";
-    let duration = "0";
-
-    if (req.file) {
-      const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
-      if (cloudinaryResponse) {
-        videoUrl = cloudinaryResponse.secure_url;
-        duration = cloudinaryResponse.duration ? cloudinaryResponse.duration.toString() : "0";
-      }
-    }
-
-    if (!videoUrl) {
-      return res.status(400).json({ message: "Video file is required and upload must succeed" });
-    }
-
-    const lectureData = {
+    section.lectures.push({
       title,
-      description,
+      description: description || "",
       videoUrl,
-      duration,
+      duration: duration || "0",
       isPreview: isPreview === 'true' || isPreview === true
-    };
-
-    section.lectures.push(lectureData);
+    });
 
     await course.save();
 

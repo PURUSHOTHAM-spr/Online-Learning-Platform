@@ -99,6 +99,18 @@ function Navbar() {
                 Instructor Panel
               </NavLink>
               <NavLink
+                to="/instructor-all-courses"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition ${
+                    isActive
+                      ? "text-violet-600"
+                      : "text-gray-700 hover:text-violet-600"
+                  }`
+                }
+              >
+                Platform Catalog
+              </NavLink>
+              <NavLink
                 to="/instructor-my-courses"
                 className={({ isActive }) =>
                   `text-sm font-medium transition ${

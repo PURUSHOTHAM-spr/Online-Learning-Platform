@@ -1,30 +1,58 @@
-import React, { useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { axiosInstance } from "../api/axiosInstance";
 import {
   FiPlus, FiUsers, FiDollarSign, FiBookOpen, FiStar
 } from "react-icons/fi";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const chartData = [
-  { name: "Jan", revenue: 4000 },
-  { name: "Feb", revenue: 5500 },
-  { name: "Mar", revenue: 6200 },
-  { name: "Apr", revenue: 5800 },
-  { name: "May", revenue: 8500 },
-  { name: "Jun", revenue: 12000 },
-];
+const InstructorDashboard = () => {
+  const [data, setData] = useState({
+    stats: {
+      totalStudents: 0,
+      totalRevenue: 0,
+      activeCount: 0,
+      averageRating: "0.0"
+    },
+    categoriesData: [],
+    chartData: []
+  });
+  const [loading, setLoading] = useState(true);
 
-const InstructorDashboard = ({ courses = [] }) => {
-
-  const stats = useMemo(() => {
-    const totalStudents = courses.reduce((acc, c) => acc + (c.studentsEnrolled || 0), 0);
-    const totalRevenue  = courses.reduce((acc, c) => acc + (c.price * c.studentsEnrolled || 0), 0);
-    return {
-      totalStudents: totalStudents.toLocaleString(),
-      totalRevenue:  (totalRevenue / 1000).toFixed(1) + "K",
-      activeCount:   courses.filter(c => c.isActive).length,
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const res = await axiosInstance.get("/instructor-api/dashboard-stats");
+        if (res.data.payload) {
+          setData(res.data.payload);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [courses]);
+    fetchDashboardStats();
+  }, []);
+
+  const { stats, categoriesData, chartData } = data;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-sans text-slate-500">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const formattedRevenue = stats.totalRevenue >= 1000 
+    ? (stats.totalRevenue / 1000).toFixed(1) + "K" 
+    : stats.totalRevenue;
+  
+  const formattedStudents = stats.totalStudents.toLocaleString();
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
@@ -48,10 +76,10 @@ const InstructorDashboard = ({ courses = [] }) => {
 
         {/* STAT CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Total Students" value={stats.totalStudents}      growth="+12.5%" icon={<FiUsers />}     color="bg-blue-50   text-blue-600"   />
-          <StatCard title="Total Revenue"  value={`₹${stats.totalRevenue}`} growth="+18.5%" icon={<FiDollarSign />} color="bg-green-50  text-green-600"  />
+          <StatCard title="Total Students" value={formattedStudents}      growth={null} icon={<FiUsers />}     color="bg-blue-50   text-blue-600"   />
+          <StatCard title="Total Revenue"  value={`₹${formattedRevenue}`} growth={null} icon={<FiDollarSign />} color="bg-green-50  text-green-600"  />
           <StatCard title="Active Courses" value={stats.activeCount}         sub="of total"  icon={<FiBookOpen />}  color="bg-purple-50 text-purple-600" />
-          <StatCard title="Average Rating" value="4.6"                       sub="Excellent"  icon={<FiStar />}      color="bg-orange-50 text-orange-600" />
+          <StatCard title="Average Rating" value={stats.averageRating}       sub="Based on reviews"  icon={<FiStar />}      color="bg-orange-50 text-orange-600" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -86,16 +114,31 @@ const InstructorDashboard = ({ courses = [] }) => {
           {/* COURSE CATEGORIES */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
             <h3 className="font-bold text-lg mb-6">Course Categories</h3>
-            <div className="flex items-center justify-center h-48 border-4 border-slate-50 rounded-full w-48 mx-auto">
-              <span className="text-center">
-                <p className="text-2xl font-bold">45%</p>
-                <p className="text-xs text-slate-400">Development</p>
-              </span>
-            </div>
-            <div className="mt-8 space-y-3">
-              <CategoryLabel label="Development" percent="45%" color="bg-blue-500"   />
-              <CategoryLabel label="Design"      percent="25%" color="bg-purple-500" />
-            </div>
+            
+            {categoriesData.length > 0 ? (
+              <>
+                <div className="flex items-center justify-center h-48 border-4 border-slate-50 rounded-full w-48 mx-auto">
+                  <span className="text-center">
+                    <p className="text-2xl font-bold">{categoriesData[0]?.percent || 0}%</p>
+                    <p className="text-xs text-slate-400 truncate max-w-[100px]">{categoriesData[0]?.label || "N/A"}</p>
+                  </span>
+                </div>
+                <div className="mt-8 space-y-3">
+                  {categoriesData.map((cat, idx) => (
+                    <CategoryLabel 
+                      key={idx} 
+                      label={cat.label} 
+                      percent={`${cat.percent}%`} 
+                      color={idx === 0 ? "bg-blue-500" : idx === 1 ? "bg-purple-500" : idx === 2 ? "bg-green-500" : "bg-slate-500"}   
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+                No categorical data available
+              </div>
+            )}
           </div>
         </div>
       </main>
