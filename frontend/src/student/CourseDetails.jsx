@@ -18,32 +18,27 @@ function CourseDetails() {
   const { courseId }  = useParams();
   const navigate      = useNavigate();
 
-  const [course,       setCourse]       = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [isEnrolled,   setIsEnrolled]   = useState(false);
-  const [enrolling,    setEnrolling]    = useState(false);
+  const [course, setCourse]       = useState(null);
+  const [loading, setLoading]      = useState(true);
+  const [isEnrolled, setIsEnrolled]   = useState(false);
+  const [enrolling, setEnrolling]    = useState(false);
   const [openSections, setOpenSections] = useState({});
-  const [hoverStar,    setHoverStar]    = useState(0);
-  const [reviewForm,   setReviewForm]   = useState({ rating: 0, review: "" });
-  const [submitting,   setSubmitting]   = useState(false);
-
+  const [hoverStar, setHoverStar]    = useState(0);
+  const [reviewForm, setReviewForm]   = useState({ rating: 0, review: "" });
+  const [submitting, setSubmitting]   = useState(false);
+  const [completed, setCompleted]     = useState({});
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Read progress from localStorage (set by CourseContent page)
-  const completed = (() => {
-    try { return JSON.parse(localStorage.getItem(`progress_${courseId}`)) || {}; }
-    catch { return {}; }
-  })();
 
   const allLectures = course
     ? course.sections?.flatMap(s => s.lectures) || []
     : [];
-  const totalLectures2   = allLectures.length;
-  const completedCount   = allLectures.filter(l => completed[l._id]).length;
-  const progressPct      = totalLectures2 > 0 ? Math.round((completedCount / totalLectures2) * 100) : 0;
-  const progressColor    = progressPct === 100 ? "bg-emerald-500" : progressPct > 50 ? "bg-violet-500" : "bg-amber-500";
-  const progressLabel    = progressPct === 100 ? "Completed! 🎉" : progressPct > 0 ? "In Progress" : "Not Started";
-  const progressTextColor= progressPct === 100 ? "text-emerald-600" : progressPct > 0 ? "text-violet-600" : "text-slate-400";
+  const totalLectures2 = allLectures.length;
+  const completedCount = allLectures.filter(l => completed[l._id]).length;
+  const progressPct = totalLectures2 > 0 ? Math.round((completedCount / totalLectures2) * 100) : 0;
+  const progressColor = progressPct === 100 ? "bg-emerald-500" : progressPct > 50 ? "bg-violet-500" : "bg-amber-500";
+  const progressLabel = progressPct === 100 ? "Completed! 🎉" : progressPct > 0 ? "In Progress" : "Not Started";
+  const progressTextColor = progressPct === 100 ? "text-emerald-600" : progressPct > 0 ? "text-violet-600" : "text-slate-400";
 
   const hasReviewed = course?.reviews?.some(
     r => r.user?._id === user?._id || r.user === user?._id
@@ -58,8 +53,22 @@ function CourseDetails() {
         ]);
         const courseData    = courseRes.data.payload;
         const enrolledList  = enrolledRes.data.payload || [];
+        const enrolled      = enrolledList.some(c => c._id === courseId);
         setCourse(courseData);
-        setIsEnrolled(enrolledList.some(c => c._id === courseId));
+        setIsEnrolled(enrolled);
+
+        // Fetch real progress from backend (only meaningful if enrolled)
+        if (enrolled) {
+          try {
+            const progressRes = await axiosInstance.get(`/user-api/progress/${courseId}`);
+            const completedLectures = progressRes.data.payload?.completedLectures || [];
+            const map = {};
+            completedLectures.forEach(id => { map[id.toString()] = true; });
+            setCompleted(map);
+          } catch (err) {
+            console.error("Failed to fetch progress", err);
+          }
+        }
 
         // Open first section by default
         if (courseData.sections?.length > 0) {
@@ -374,22 +383,52 @@ function CourseDetails() {
                       <div className="divide-y divide-slate-100">
                         {section.lectures?.length === 0 ? (
                           <p className="px-5 py-3 text-sm text-slate-400">No lectures in this section.</p>
-                        ) : section.lectures?.map((lecture, li) => (
-                          <div key={lecture._id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-violet-50/30 transition">
-                            <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-                              {isEnrolled
-                                ? <FiPlay size={12} className="text-violet-600" />
-                                : <FiLock size={11} className="text-violet-400" />
-                              }
+                        ) : section.lectures?.map((lecture, li) => {
+                            const isDone = isEnrolled && !!completed[lecture._id];
+                            return (
+                          <div
+                            key={lecture._id}
+                            className={`flex items-center gap-4 px-5 py-3.5 transition ${
+                              isDone
+                                ? "bg-emerald-50/60 hover:bg-emerald-50"
+                                : "hover:bg-violet-50/30"
+                            }`}
+                          >
+                            {/* Icon bubble */}
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                              isDone
+                                ? "bg-emerald-100"
+                                : isEnrolled
+                                  ? "bg-violet-100"
+                                  : "bg-slate-100"
+                            }`}>
+                              {isDone ? (
+                                <FiCheckCircle size={14} className="text-emerald-600" />
+                              ) : isEnrolled ? (
+                                <FiPlay size={12} className="text-violet-600" />
+                              ) : (
+                                <FiLock size={11} className="text-violet-400" />
+                              )}
                             </div>
+
+                            {/* Text */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-700 truncate">{lecture.title}</p>
+                              <p className={`text-sm font-medium truncate ${
+                                isDone ? "text-emerald-700 line-through decoration-emerald-300" : "text-slate-700"
+                              }`}>{lecture.title}</p>
                               {lecture.description && (
                                 <p className="text-xs text-slate-400 truncate mt-0.5">{lecture.description}</p>
                               )}
                             </div>
+
+                            {/* Badges */}
                             <div className="flex items-center gap-3 shrink-0">
-                              {lecture.isPreview && (
+                              {isDone && (
+                                <span className="text-xs font-bold text-emerald-600 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                  Done ✓
+                                </span>
+                              )}
+                              {lecture.isPreview && !isDone && (
                                 <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                                   Preview
                                 </span>
@@ -401,7 +440,8 @@ function CourseDetails() {
                               )}
                             </div>
                           </div>
-                        ))}
+                            );
+                          })}
                       </div>
                     )}
                   </div>

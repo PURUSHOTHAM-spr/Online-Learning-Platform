@@ -92,6 +92,13 @@ export default function CourseContent() {
 
 
 
+  // Sync completed progress to localStorage so CourseDetails page can read it
+  useEffect(() => {
+    if (Object.keys(completed).length > 0 || course) {
+      localStorage.setItem(`progress_${courseId}`, JSON.stringify(completed));
+    }
+  }, [completed, courseId, course]);
+
   useEffect(() => {
     localStorage.setItem(`notes_${courseId}`, JSON.stringify(notes));
   }, [notes, courseId]);
