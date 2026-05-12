@@ -6,7 +6,7 @@ import {
   FiPlay, FiCheckCircle, FiChevronDown, FiChevronUp,
   FiBook, FiArrowLeft, FiMenu, FiX, FiClock,
   FiLock, FiList, FiMessageSquare, FiFileText,
-  FiChevronLeft, FiChevronRight, FiCircle
+  FiChevronLeft, FiChevronRight, FiCircle, FiAlertTriangle, FiRefreshCw
 } from "react-icons/fi";
 
 /* ─── Helpers ─────────────────────────────────────────── */
@@ -23,7 +23,8 @@ const TABS = ["Overview", "Notes", "Reviews"];
 export default function CourseContent() {
   const { courseId } = useParams();
   const navigate     = useNavigate();
-  const videoRef     = useRef(null);
+  const videoRef        = useRef(null);
+  const videoWrapperRef = useRef(null);
 
   const [course,         setCourse]         = useState(null);
   const [loading,        setLoading]        = useState(true);
@@ -37,6 +38,9 @@ export default function CourseContent() {
   const [notes,          setNotes]          = useState(() => {
     try { return JSON.parse(localStorage.getItem(`notes_${courseId}`)) || []; } catch { return []; }
   });
+  const [videoError,     setVideoError]     = useState(false);
+  const [videoLoading,   setVideoLoading]   = useState(false);
+  const [retryKey,       setRetryKey]       = useState(0);
 
   /* Fetch course + enrollment check */
   useEffect(() => {
@@ -157,12 +161,25 @@ export default function CourseContent() {
     if (newFlatIdx < 0 || newFlatIdx >= allLectures.length) return;
     const { sectionIdx, lectureIdx } = allLectures[newFlatIdx];
     setActiveLecture({ sectionIdx, lectureIdx });
+    setVideoError(false);
+    setVideoLoading(true);
     setOpenSections(prev => ({
       ...prev,
       [course.sections[sectionIdx]._id]: true
     }));
-    if (videoRef.current) videoRef.current.scrollIntoView({ behavior: "smooth" });
+    // Scroll to the video wrapper (not the <video> tag) to avoid sticky header clipping
+    setTimeout(() => {
+      if (videoWrapperRef.current) {
+        videoWrapperRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 80);
   };
+
+  /* Reset video state when active lecture changes */
+  useEffect(() => {
+    setVideoError(false);
+    setVideoLoading(true);
+  }, [activeLecture]);
 
   /* Save note */
   const saveNote = () => {
@@ -260,23 +277,61 @@ export default function CourseContent() {
         <div className={`flex flex-col flex-1 min-w-0 overflow-y-auto transition-all duration-300`}>
 
           {/* Video player */}
-          <div className="bg-black w-full" style={{ minHeight: "240px" }}>
+          <div ref={videoWrapperRef} className="bg-black w-full relative" style={{ minHeight: "340px" }}>
             {currentLecture?.videoUrl ? (
-              <video
-                ref={videoRef}
-                key={currentLecture._id}
-                src={currentLecture.videoUrl}
-                controls
-                onEnded={handleVideoEnded}
-                className="w-full max-h-[70vh] object-contain bg-black"
-                controlsList="nodownload"
-              >
-                Your browser does not support the video tag.
-              </video>
+              <>
+                {/* Loading overlay */}
+                {videoLoading && !videoError && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 gap-3">
+                    <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-slate-400 text-sm font-medium">Loading video…</p>
+                  </div>
+                )}
+
+                {/* Error overlay */}
+                {videoError && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 gap-4">
+                    <FiAlertTriangle size={36} className="text-amber-400" />
+                    <p className="text-white font-semibold text-sm">Failed to load video</p>
+                    <p className="text-slate-400 text-xs text-center max-w-xs">
+                      The video could not be played. Check your connection or try again.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setVideoError(false);
+                        setVideoLoading(true);
+                        setRetryKey(k => k + 1);
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition"
+                    >
+                      <FiRefreshCw size={14} /> Retry
+                    </button>
+                  </div>
+                )}
+
+                <video
+                  ref={videoRef}
+                  key={`${currentLecture._id}-${retryKey}`}
+                  src={currentLecture.videoUrl}
+                  controls
+                  preload="metadata"
+                  onLoadStart={() => { setVideoLoading(true); setVideoError(false); }}
+                  onCanPlay={() => setVideoLoading(false)}
+                  onPlaying={() => setVideoLoading(false)}
+                  onEnded={handleVideoEnded}
+                  onError={() => {
+                    setVideoError(true);
+                    setVideoLoading(false);
+                    toast.error("Video failed to load. Try retrying.");
+                  }}
+                  className="w-full max-h-[70vh] object-contain bg-black"
+                  controlsList="nodownload"
+                />
+              </>
             ) : (
-              <div className="flex items-center justify-center h-64 text-slate-500 gap-3">
-                <FiLock size={24} />
-                <span>No video available for this lecture.</span>
+              <div className="flex flex-col items-center justify-center h-64 text-slate-500 gap-3">
+                <FiLock size={28} className="text-slate-600" />
+                <span className="text-sm font-medium">No video available for this lecture.</span>
               </div>
             )}
           </div>
@@ -523,7 +578,13 @@ export default function CourseContent() {
                               key={lecture._id}
                               onClick={() => {
                                 setActiveLecture({ sectionIdx: si, lectureIdx: li });
-                                if (videoRef.current) videoRef.current.scrollIntoView({ behavior: "smooth" });
+                                setVideoError(false);
+                                setVideoLoading(true);
+                                setTimeout(() => {
+                                  if (videoWrapperRef.current) {
+                                    videoWrapperRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                                  }
+                                }, 80);
                               }}
                               className={`w-full flex items-start gap-3 px-5 py-3 text-left transition ${
                                 isActive

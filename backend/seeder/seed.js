@@ -13,16 +13,16 @@ import { User } from "../models/User.js";
 
 config();
 
-// ─── Sample public MP4 URLs (Big Buck Bunny clips — universally accessible) ───
+// ─── Sample public MP4 URLs (reliable CDNs — tested & always accessible) ───
 const VIDEOS = [
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-  "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Subaru Outback.mp4",
+  "https://www.w3schools.com/html/mov_bbb.mp4",
+  "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
+  "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
+  "https://samplelib.com/lib/preview/mp4/sample-10s.mp4",
+  "https://www.w3schools.com/html/movie.mp4",
+  "https://samplelib.com/lib/preview/mp4/sample-15s.mp4",
+  "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
+  "https://samplelib.com/lib/preview/mp4/sample-20s.mp4",
 ];
 
 const v = (i) => VIDEOS[i % VIDEOS.length];
