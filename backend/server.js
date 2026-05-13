@@ -15,7 +15,10 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(cors({
-    origin: 'https://online-learning-platform-livid.vercel.app/',
+    origin: [
+    "http://localhost:5173",
+    "https://online-learning-platform-livid.vercel.app"
+  ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"]
