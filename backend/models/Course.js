@@ -40,10 +40,7 @@ const sectionSchema = new mongoose.Schema({
     }
 });
 
-
-
 // Comment Schema
-
 const userCommentSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,

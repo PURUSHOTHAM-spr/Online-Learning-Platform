@@ -1,19 +1,19 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 function RootLayout() {
+  const { pathname } = useLocation();
+  // Admin pages have their own full-page sidebar layout — hide global nav
+  const isAdminPage = pathname.startsWith("/admin");
+
   return (
     <div>
-
-      {/* Navbar shown on all pages */}
-      <Header />
-
-      {/* Page Content */}
+      {!isAdminPage && <Header />}
       <main>
         <Outlet />
       </main>
-        <Footer/>
+      {!isAdminPage && <Footer />}
     </div>
   );
 }
