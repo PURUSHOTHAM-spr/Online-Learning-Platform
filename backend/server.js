@@ -17,7 +17,9 @@ app.use(cookieParser());
 app.use(cors({
     origin: [
     "http://localhost:5173",
-    "https://online-learning-platform-livid.vercel.app"
+    "http://127.0.0.1:5173",
+    "https://online-learning-platform-livid.vercel.app",
+    "https://online-learning-platform-livid.vercel.app/"
   ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],

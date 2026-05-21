@@ -61,10 +61,12 @@ authRouter.post('/login', async (req, res) => {
         );
 
         // 5. Send cookie & response
-        // In a real production app, add secure: true if using HTTPS
+        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax'
         });
 
         const userObj = user.toObject();
@@ -82,6 +84,11 @@ authRouter.post('/login', async (req, res) => {
 
 // User Logout
 authRouter.post('/logout', (req, res) => {
-    res.clearCookie('token');
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax'
+    });
     res.status(200).json({ message: "Logout successful" });
 });
