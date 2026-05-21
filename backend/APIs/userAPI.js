@@ -46,6 +46,55 @@ userRouter.post('/enroll-course', async (req, res) => {
             return res.status(400).json({ message: "already enrolled in this course" });
         }
 
+        // Validate payment if it's a paid course
+        if (course.price > 0) {
+            const { paymentDetails } = req.body;
+            if (!paymentDetails) {
+                return res.status(400).json({ message: "payment details are required for paid courses" });
+            }
+
+            const { paymentMethod } = paymentDetails;
+
+            if (paymentMethod === "upi") {
+                const { upiTxnId } = paymentDetails;
+                if (!upiTxnId) {
+                    return res.status(400).json({ message: "UPI Transaction ID is required" });
+                }
+                if (!/^UPI\d{12}$/.test(upiTxnId.toString().trim())) {
+                    return res.status(400).json({ message: "invalid UPI Transaction ID format (must be UPI followed by 12 digits)" });
+                }
+            } else {
+                // Default card validation
+                const { cardNumber, cardHolder, expiryDate, cvv } = paymentDetails;
+
+                if (!cardHolder || typeof cardHolder !== 'string' || cardHolder.trim().length === 0) {
+                    return res.status(400).json({ message: "valid card holder name is required" });
+                }
+
+                if (!cardNumber) {
+                    return res.status(400).json({ message: "card number is required" });
+                }
+                const cleanedNum = cardNumber.toString().replace(/\s+/g, '');
+                if (!/^\d{13,19}$/.test(cleanedNum)) {
+                    return res.status(400).json({ message: "invalid card number (must be between 13 and 19 digits)" });
+                }
+
+                if (!expiryDate) {
+                    return res.status(400).json({ message: "expiry date is required" });
+                }
+                if (!/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(expiryDate)) {
+                    return res.status(400).json({ message: "invalid expiry date format (must be MM/YY)" });
+                }
+
+                if (!cvv) {
+                    return res.status(400).json({ message: "cvv is required" });
+                }
+                if (!/^\d{3,4}$/.test(cvv.toString().trim())) {
+                    return res.status(400).json({ message: "invalid CVV (must be 3 or 4 digits)" });
+                }
+            }
+        }
+
         user.coursesEnrolled.push(courseId);
         course.studentsEnrolled += 1;
 

@@ -274,6 +274,29 @@ function CourseDetails() {
                   <span className="text-xs text-slate-400">{course.sections?.length || 0} sections · {totalLectures} lectures</span>
                 </div>
 
+                {/* Pricing Details */}
+                {!isEnrolled && (
+                  <div className="mb-4">
+                    {course.price > 0 ? (
+                      <div className="space-y-1">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Price</span>
+                        <div className="flex items-baseline gap-2.5">
+                          <span className="text-3xl font-black text-slate-900">₹{course.price}</span>
+                          <span className="text-sm text-slate-400 line-through">₹{Math.round(course.price * 1.25)}</span>
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 animate-pulse">20% OFF</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Price</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black text-emerald-600">Free</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {isEnrolled ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
@@ -288,18 +311,27 @@ function CourseDetails() {
                     </Link>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleEnroll}
-                    disabled={enrolling}
-                    className="w-full py-3.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition shadow-lg shadow-violet-200 disabled:opacity-60"
-                  >
-                    {enrolling ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Enrolling...
-                      </span>
-                    ) : "Enroll for Free"}
-                  </button>
+                  course.price > 0 ? (
+                    <Link
+                      to={`/checkout/${courseId}`}
+                      className="block text-center w-full py-3.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition shadow-lg shadow-violet-200 cursor-pointer"
+                    >
+                      Buy Now - ₹{course.price}
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                      className="w-full py-3.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition shadow-lg shadow-violet-200 disabled:opacity-60 cursor-pointer"
+                    >
+                      {enrolling ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Enrolling...
+                        </span>
+                      ) : "Enroll for Free"}
+                    </button>
+                  )
                 )}
 
                 {/* Quick info list */}

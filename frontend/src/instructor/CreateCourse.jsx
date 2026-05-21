@@ -39,7 +39,7 @@ function CreateCourse() {
       });
 
       toast.success("Course Created Successfully!");
-      navigate("/instructor"); // Go back to dashboard
+      navigate("/instructor-dashboard"); // Go back to dashboard
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to create course");
     } finally {

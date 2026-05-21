@@ -310,11 +310,26 @@ function CourseCard({ course, isEnrolled, onEnroll, enrollingId }) {
         </h3>
         <p className="text-slate-500 text-xs line-clamp-2 mb-4 flex-1">{course.description}</p>
 
-        <div className="flex items-center gap-3 text-xs text-slate-400 mb-4 border-t border-slate-100 pt-3">
+        <div className="flex items-center gap-3 text-xs text-slate-400 mb-2 border-t border-slate-100 pt-3">
           <span className="flex items-center gap-1"><FiBook size={11} /> {course.sections?.length || 0} sections</span>
           <span className="flex items-center gap-1"><FiStar size={11} className="text-amber-400" /> {course.rating > 0 ? course.rating.toFixed(1) : "New"}</span>
           <span className="flex items-center gap-1"><FiUsers size={11} /> {course.studentsEnrolled || 0}</span>
         </div>
+
+        {/* Pricing inside card */}
+        {!isEnrolled && (
+          <div className="flex items-center justify-between mb-3 text-xs text-slate-500">
+            <span>Price</span>
+            {course.price > 0 ? (
+              <div className="flex items-baseline gap-1.5 font-bold">
+                <span className="text-slate-800 text-sm font-extrabold">₹{course.price}</span>
+                <span className="text-slate-400 line-through text-[10px]">₹{Math.round(course.price * 1.25)}</span>
+              </div>
+            ) : (
+              <span className="text-emerald-600 font-bold">Free</span>
+            )}
+          </div>
+        )}
 
         {isEnrolled ? (
           <Link
@@ -324,13 +339,22 @@ function CourseCard({ course, isEnrolled, onEnroll, enrollingId }) {
             <FiPlay size={13} /> Continue
           </Link>
         ) : (
-          <button
-            onClick={() => onEnroll(course._id)}
-            disabled={enrollingId === course._id}
-            className="w-full py-2.5 rounded-xl border-2 border-violet-500 text-violet-600 text-sm font-bold hover:bg-violet-600 hover:text-white transition disabled:opacity-50"
-          >
-            {enrollingId === course._id ? "Enrolling..." : "Enroll Free"}
-          </button>
+          course.price > 0 ? (
+            <Link
+              to={`/course/${course._id}`}
+              className="w-full py-2.5 rounded-xl border-2 border-violet-500 text-violet-600 text-sm font-bold text-center flex items-center justify-center gap-2 hover:bg-violet-600 hover:text-white transition cursor-pointer"
+            >
+              Buy - ₹{course.price}
+            </Link>
+          ) : (
+            <button
+              onClick={() => onEnroll(course._id)}
+              disabled={enrollingId === course._id}
+              className="w-full py-2.5 rounded-xl border-2 border-violet-500 text-violet-600 text-sm font-bold hover:bg-violet-600 hover:text-white transition disabled:opacity-50 cursor-pointer"
+            >
+              {enrollingId === course._id ? "Enrolling..." : "Enroll Free"}
+            </button>
+          )
         )}
       </div>
     </div>
@@ -374,7 +398,21 @@ function CourseListRow({ course, isEnrolled, onEnroll, enrollingId }) {
           </div>
         </div>
 
-        <div className="shrink-0">
+        <div className="shrink-0 flex flex-col items-end gap-2">
+          {/* Pricing Details */}
+          {!isEnrolled && (
+            <div className="mb-1 text-right">
+              {course.price > 0 ? (
+                <div className="flex items-baseline gap-1.5 justify-end">
+                  <span className="font-extrabold text-slate-800 text-sm">₹{course.price}</span>
+                  <span className="text-slate-400 line-through text-[10px]">₹{Math.round(course.price * 1.25)}</span>
+                </div>
+              ) : (
+                <span className="font-bold text-emerald-600 text-xs">Free</span>
+              )}
+            </div>
+          )}
+
           {isEnrolled ? (
             <Link
               to={`/course/${course._id}`}
@@ -383,13 +421,22 @@ function CourseListRow({ course, isEnrolled, onEnroll, enrollingId }) {
               <FiPlay size={13} /> Continue
             </Link>
           ) : (
-            <button
-              onClick={() => onEnroll(course._id)}
-              disabled={enrollingId === course._id}
-              className="px-5 py-2.5 rounded-xl border-2 border-violet-500 text-violet-600 text-sm font-bold hover:bg-violet-600 hover:text-white transition disabled:opacity-50"
-            >
-              {enrollingId === course._id ? "Enrolling..." : "Enroll Free"}
-            </button>
+            course.price > 0 ? (
+              <Link
+                to={`/course/${course._id}`}
+                className="px-5 py-2.5 rounded-xl border-2 border-violet-500 text-violet-600 text-sm font-bold text-center flex items-center justify-center gap-2 hover:bg-violet-600 hover:text-white transition cursor-pointer"
+              >
+                Buy - ₹{course.price}
+              </Link>
+            ) : (
+              <button
+                onClick={() => onEnroll(course._id)}
+                disabled={enrollingId === course._id}
+                className="px-5 py-2.5 rounded-xl border-2 border-violet-500 text-violet-600 text-sm font-bold hover:bg-violet-600 hover:text-white transition disabled:opacity-50 cursor-pointer"
+              >
+                {enrollingId === course._id ? "Enrolling..." : "Enroll Free"}
+              </button>
+            )
           )}
         </div>
       </div>
